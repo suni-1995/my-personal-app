@@ -1,3 +1,4 @@
+import{listFiles,putFiles,deleteOwner,deleteFile}from"./media-store.js?v=phase1-final";
 import {SETTINGS_GROUPS,uid} from "./schema.js";
 
 export function renderWorkspace({area,data,projectId,category,el,btn,heading,modal,persist,render}) {
@@ -32,7 +33,7 @@ export function renderWorkspace({area,data,projectId,category,el,btn,heading,mod
       const row=el("div",{class:"item"});
       row.append(btn((settings?"📄 ":"👤 ")+(entry.title||"제목 없음"),()=>settings?entryEditor(entry):characterDetail(entry),"name"));
       row.append(btn("편집",()=>entryEditor(entry)));
-      row.append(btn("삭제",()=>{if(!confirm("이 항목을 삭제할까?"))return;const old=data.entries;data.entries=old.filter(x=>x.id!==entry.id);if(!persist()){data.entries=old;return}view()},"danger"));
+      row.append(btn("삭제",()=>{if(!confirm("이 항목을 삭제할까?"))return;const old=data.entries;data.entries=old.filter(x=>x.id!==entry.id);if(!persist()){data.entries=old;return}if(!settings)deleteOwner("character:"+entry.id).catch(console.warn);view()},"danger"));
       area.append(row);
     }
   };
@@ -74,10 +75,28 @@ export function renderWorkspace({area,data,projectId,category,el,btn,heading,mod
       view();
     });
   }
+  function pickCharacterImage(entry){
+    const input=document.createElement("input");
+    input.type="file";input.accept="image/*";input.style.display="none";
+    document.body.append(input);
+    input.addEventListener("change",async()=>{
+      const file=input.files?.[0];input.remove();
+      if(!file)return;
+      if(!file.type.startsWith("image/")){alert("이미지 파일만 선택할 수 있어.");return}
+      try{
+        const owner="character:"+entry.id;
+        const prior=await listFiles(owner);
+        await putFiles([{id:uid(),owner,name:file.name,blob:file,type:"image",order:0}]);
+        for(const old of prior)await deleteFile(old.id);
+        characterDetail(entry);
+      }catch(e){alert("이미지를 등록하지 못했어: "+e.message)}
+    });
+    input.click();
+  }
   function characterDetail(entry){
     area.replaceChildren();
     const bar=heading(entry.title,view);
-    bar.append(btn("기본 정보 수정",()=>entryEditor(entry)));
+    bar.append(btn("기본 정보 수정",()=>entryEditor(entry)));bar.append(btn("이미지 가져오기",()=>pickCharacterImage(entry)));
     area.append(bar);
     const info=el("div",{class:"detail-info"});
     info.append(el("p",{text:"나이: "+(entry.age||"미입력")+" · 성별: "+(entry.gender||"미입력")}));
@@ -88,6 +107,20 @@ export function renderWorkspace({area,data,projectId,category,el,btn,heading,mod
       info.append(image);
     }
     area.append(info);
+    const local=el("div",{class:"detail-info"});
+    area.append(local);
+    listFiles("character:"+entry.id).then(files=>{
+      if(!area.contains(local))return;
+      local.replaceChildren();
+      if(files[0]){
+        const url=URL.createObjectURL(files[0].blob);
+        const img=el("img",{src:url,alt:entry.title,class:"character-image"});
+        img.addEventListener("load",()=>URL.revokeObjectURL(url),{once:true});
+        img.addEventListener("error",()=>URL.revokeObjectURL(url),{once:true});
+        local.append(img);
+        local.append(btn("등록 이미지 삭제",async()=>{if(!confirm("캐릭터 이미지를 삭제할까?"))return;try{await deleteOwner("character:"+entry.id);characterDetail(entry)}catch(e){alert(e.message)}},"danger"));
+      }
+    }).catch(e=>local.append(el("p",{class:"hint",text:"이미지 저장소를 열 수 없어: "+e.message})));
     const tabs=["설명","인물 관계","연결 문서","이미지","캐릭터송","타임라인"];
     const nav=el("div",{class:"tabs"}),content=el("section",{class:"detail-content"});
     for(const name of tabs)nav.append(btn(name,()=>{

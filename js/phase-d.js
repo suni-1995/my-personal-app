@@ -59,7 +59,6 @@ export function renderPhaseD({area,data,projectId,category,el,btn,heading,modal,
     area.append(bar);
     if(item.kind==="comic"){
       renderComicFiles({area,item,btn,heading,onBack:view});
-      if(item.source){const source=el("p");source.append(el("a",{href:item.source,target:"_blank",rel:"noopener noreferrer",text:"출처 링크"}));area.append(source)}
       return;
     }
     area.append(el("p",{class:"hint",text:"글(소설)"}));

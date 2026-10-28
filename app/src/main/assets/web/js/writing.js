@@ -123,8 +123,8 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
   }
   function renderNovels(){
     const current=find(parentId);
-    const bar=navigation(current?.title||"장문",current?()=>{parentId=current.parentId||"";view()}:null);
     if(current?.kind==="chapter"){showDetail(current);return}
+    const bar=navigation(current?.title||"장문",current?()=>{parentId=current.parentId||"";view()}:null);
     const level=current?.kind==="work"?"season":current?.kind==="season"?"chapter":"work";
     bar.append(btn("+ "+(level==="work"?"작품":level==="season"?"시즌":"회차"),()=>createOrEdit(null,level,parentId),"primary"));
     const entries=items().filter(e=>(e.parentId||"")===parentId&&(e.kind||"work")===level);
