@@ -1,0 +1,4 @@
+/* Default typography, independent from layout and feature styles.
+   Additional font families and selection can be added later without rewriting the UI. */
+:root{--app-font:system-ui,-apple-system,"Noto Sans KR",sans-serif}
+body,button,input,select,textarea{font-family:var(--app-font)}

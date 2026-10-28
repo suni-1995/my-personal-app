@@ -55,7 +55,24 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
   }
   function displayEntries(entries,open){
     if(!entries.length)area.append(text("아직 등록한 항목이 없어.","empty"));
-    for(const item of entries.sort((a,b)=>(a.order??a.updatedAt??0)-(b.order??b.updatedAt??0)))area.append(row(item,()=>open(item)));
+    const ordered=entries.sort((a,b)=>(a.order??a.updatedAt??0)-(b.order??b.updatedAt??0));
+    for(let i=0;i<ordered.length;i++){
+      const item=ordered[i],r=row(item,()=>open(item));
+      if(isTimeline){
+        r.append(btn("↑",()=>move(ordered,i,-1)));
+        r.append(btn("↓",()=>move(ordered,i,1)));
+      }
+      area.append(r);
+    }
+  }
+  function move(records,index,delta){
+    const other=index+delta;if(other<0||other>=records.length)return;
+    const snapshots=records.map(e=>({id:e.id,order:e.order}));
+    const reordered=records.slice();
+    [reordered[index],reordered[other]]=[reordered[other],reordered[index]];
+    reordered.forEach((e,i)=>e.order=i);
+    if(!persist()){for(const p of snapshots){const entry=records.find(e=>e.id===p.id);entry.order=p.order}return}
+    view();
   }
   function worldlineOptions(){
     const tabs=el("div",{class:"tabs"});
@@ -100,18 +117,18 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
     displayEntries(children,item=>{if(item.kind==="detail"){showDetail(item)}else{parentId=item.id;view()}});
   }
   function showDetail(item){
-    area.replaceChildren();navigation(item.title,view);
+    area.replaceChildren();navigation(item.title,()=>{if(isNovel)parentId=item.parentId||"";view()});
     area.append(text(item.body||"내용 없음","detail-text"));
     area.append(btn("편집",()=>createOrEdit(item,item.kind,item.parentId||"",item.worldline||"main")));
   }
   function renderNovels(){
     const current=find(parentId);
     const bar=navigation(current?.title||"장문",current?()=>{parentId=current.parentId||"";view()}:null);
+    if(current?.kind==="chapter"){showDetail(current);return}
     const level=current?.kind==="work"?"season":current?.kind==="season"?"chapter":"work";
     bar.append(btn("+ "+(level==="work"?"작품":level==="season"?"시즌":"회차"),()=>createOrEdit(null,level,parentId),"primary"));
-    if(current?.kind==="chapter"){showDetail(current);return}
     const entries=items().filter(e=>(e.parentId||"")===parentId&&(e.kind||"work")===level);
-    displayEntries(entries,item=>{if(item.kind==="chapter")showDetail(item);else{parentId=item.id;view()}});
+    displayEntries(entries,item=>{parentId=item.id;view()});
   }
   function renderPosts(){
     const bar=navigation("썰");

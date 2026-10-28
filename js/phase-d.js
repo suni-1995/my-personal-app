@@ -1,4 +1,5 @@
-import{renderMediaArea,renderComicFiles}from"./media.js?v=media-1";
+import{renderMediaArea,renderComicFiles}from"./media.js?v=phase1-final";
+import{deleteOwner}from"./media-store.js?v=phase1-final";
 import {uid} from "./schema.js";
 
 export function renderPhaseD({area,data,projectId,category,el,btn,heading,modal,persist}) {
@@ -48,6 +49,7 @@ export function renderPhaseD({area,data,projectId,category,el,btn,heading,modal,
     const old=data.entries;
     data.entries=old.filter(x=>x.id!==item.id);
     if(!persist()){data.entries=old;return}
+    if(item.kind==="comic")deleteOwner("comic:"+item.id).catch(e=>console.warn("첨부 이미지 정리 실패",e));
     view();
   }
   function detail(item){
@@ -55,7 +57,12 @@ export function renderPhaseD({area,data,projectId,category,el,btn,heading,modal,
     const bar=heading(item.title,view);
     bar.append(btn("편집",()=>edit(item)));
     area.append(bar);
-    if(item.kind==="comic"){renderComicFiles({area,item,btn,heading,onBack:view});return}area.append(el("p",{class:"hint",text:"글(소설)"}));
+    if(item.kind==="comic"){
+      renderComicFiles({area,item,btn,heading,onBack:view});
+      if(item.source){const source=el("p");source.append(el("a",{href:item.source,target:"_blank",rel:"noopener noreferrer",text:"출처 링크"}));area.append(source)}
+      return;
+    }
+    area.append(el("p",{class:"hint",text:"글(소설)"}));
     area.append(el("p",{class:"detail-text",text:item.body||"내용 없음"}));
     if(item.source){
       const link=el("a",{href:item.source,target:"_blank",rel:"noopener noreferrer",text:"출처 링크"});
