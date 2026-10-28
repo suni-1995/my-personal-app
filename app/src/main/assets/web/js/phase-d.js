@@ -1,4 +1,4 @@
-import{renderMediaArea,renderComicFiles}from"./media.js?v=android-native-1";
+import{renderMediaArea,renderComicFiles}from"./media.js?v=scroll-view-1";
 import{deleteOwner,listFiles,putFiles,deleteFile,hasNativeMedia,pickNativeMedia}from"./media-store.js";
 import{uid}from"./schema.js";
 export function renderPhaseD({area,data,projectId,category,el,btn,heading,modal,persist}){

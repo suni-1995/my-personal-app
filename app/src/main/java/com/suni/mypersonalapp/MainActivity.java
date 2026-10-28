@@ -106,7 +106,7 @@ public class MainActivity extends Activity {
     String mime=getContentResolver().getType(uri);
     if(mime==null||!mime.startsWith(pickType+"/"))throw new IOException("파일 형식을 확인해 주세요.");
     long duration=0;
-    if("video".equals(pickType)){duration=getDuration(uri);if(duration<0||duration>=10000)throw new IOException("영상은 10초 미만만 등록할 수 있습니다.");}
+    if("video".equals(pickType)){duration=getDuration(uri);if(duration<0||duration>30000)throw new IOException("영상은 최대 30초까지 등록할 수 있습니다.");}
     String id=UUID.randomUUID().toString();File output=new File(mediaDir,id);
     long size=0;
     try(InputStream input=getContentResolver().openInputStream(uri);OutputStream out=new FileOutputStream(output)){

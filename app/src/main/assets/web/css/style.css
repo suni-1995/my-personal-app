@@ -17,3 +17,13 @@
 .gallery-stage img,.gallery-stage video{max-width:100%;max-height:100%;object-fit:contain}
 
 .sun-tools{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.sun-tools input{flex:2;min-width:180px}.sun-tools select{flex:1;min-width:120px}.sun-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}.sun-media-card,.sun-work-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:12px}.sun-media-card{display:flex;flex-direction:column;gap:8px;min-width:0}.sun-media-card strong{overflow-wrap:anywhere}.sun-media-cover{border:0;background:transparent;padding:0;display:flex;align-items:center;justify-content:center;width:100%;height:160px;cursor:pointer}.sun-media-thumb{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}.sun-video-icon{font-size:48px}.sun-media-card .hint{margin:0}.sun-media-card button:not(.sun-media-cover){align-self:flex-start}.sun-work-card{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}.sun-work-body{flex:1;min-width:170px}.sun-work-body p{margin:4px 0}.sun-snippet{white-space:pre-wrap;overflow:hidden;max-height:4.5em;color:var(--muted);font-size:14px}.tabs button.active{background:var(--line)}
+
+/* Scroll-based image reader (PC and Android). */
+.gallery-scroll-panel{max-height:96vh}
+.gallery-scroll-panel .gallery-header{flex:0 0 auto;border-bottom:1px solid var(--line)}
+.gallery-scroll-stage{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;background:#151515;padding:12px 8px;display:block;text-align:center;-webkit-overflow-scrolling:touch}
+.gallery-scroll-item{display:block;width:100%;margin:0 auto 12px}
+.gallery-scroll-item img{display:block;width:auto;height:auto;max-width:100%;max-height:none;margin:0 auto;object-fit:contain}
+.gallery-scroll-item video{display:block;max-width:100%;width:min(100%,760px);max-height:75vh;margin:0 auto}
+.gallery-page-label{color:#bbb;font-size:12px;margin:7px 0 14px}
+@media(max-width:700px){.gallery-scroll-stage{padding:6px 0}.gallery-scroll-panel{height:96vh}.gallery-scroll-item{margin-bottom:7px}}
