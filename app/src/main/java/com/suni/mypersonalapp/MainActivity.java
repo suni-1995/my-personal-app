@@ -16,7 +16,10 @@ public class MainActivity extends Activity {
   @Override public WebResourceResponse shouldInterceptRequest(WebView view,WebResourceRequest request){
    String url=request.getUrl().toString();
    if(!url.startsWith(BASE))return super.shouldInterceptRequest(view,request);
-   String path=url.substring(BASE.length());
+   String path=request.getUrl().getPath();
+   String prefix="/assets/";
+   if(path==null||!path.startsWith(prefix))return new WebResourceResponse("text/plain","UTF-8",404,"Not found",null,null);
+   path=path.substring(prefix.length());
    if(path.contains(".."))return new WebResourceResponse("text/plain","UTF-8",404,"Not found",null,null);
    try{InputStream stream=getAssets().open("web/"+path);String mime=path.endsWith(".js")?"text/javascript":path.endsWith(".css")?"text/css":path.endsWith(".html")?"text/html":"text/plain";return new WebResourceResponse(mime,"UTF-8",stream);}
    catch(IOException e){return new WebResourceResponse("text/plain","UTF-8",404,"Not found",null,null);}
