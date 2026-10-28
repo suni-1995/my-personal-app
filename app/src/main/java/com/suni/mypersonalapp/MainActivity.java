@@ -6,12 +6,14 @@ import android.webkit.WebViewClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
+import android.webkit.WebChromeClient;
 import java.io.InputStream;
 import java.io.IOException;
 public class MainActivity extends Activity {
  private WebView webView;
  private static final String BASE="https://appassets.androidplatform.net/assets/";
  @Override public void onCreate(Bundle state){super.onCreate(state);webView=new WebView(this);
+ webView.setWebChromeClient(new WebChromeClient());
  webView.setWebViewClient(new WebViewClient(){
   @Override public WebResourceResponse shouldInterceptRequest(WebView view,WebResourceRequest request){
    String url=request.getUrl().toString();
