@@ -35,7 +35,7 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
     let changed=true;
     while(changed){changed=false;for(const e of items())if(e.parentId&&descendants.has(e.parentId)&&!descendants.has(e.id)){descendants.add(e.id);changed=true}}
     if(item.kind==="worldline")for(const e of items())if(e.worldline===item.id)descendants.add(e.id);
-    if(!confirm(descendants.size>1?"하위 항목까지 "+descendants.size+"개를 삭제할까?":"이 항목을 삭제할까?"))return;
+    if(!confirm(descendants.size>1?"하위 항목까지 "+descendants.size+"개를 삭제하시겠습니까?":"이 항목을 삭제하시겠습니까?"))return;
     const prev=data.entries;
     commit(()=>{data.entries=prev.filter(e=>!descendants.has(e.id))},()=>{data.entries=prev});
     if(descendants.has(parentId))parentId="";
@@ -54,7 +54,7 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
     return bar;
   }
   function displayEntries(entries,open){
-    if(!entries.length)area.append(text("아직 등록한 항목이 없어.","empty"));
+    if(!entries.length)area.append(text("아직 등록한 항목이 없습니다.","empty"));
     const ordered=entries.sort((a,b)=>(a.order??a.updatedAt??0)-(b.order??b.updatedAt??0));
     for(let i=0;i<ordered.length;i++){
       const item=ordered[i],r=row(item,()=>open(item));
@@ -134,7 +134,7 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
     const bar=navigation("썰");
     bar.append(btn("+ 게시물",()=>createOrEdit(null,"post"),"primary"));
     const entries=items().filter(e=>!e.kind||e.kind==="post").sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
-    if(!entries.length)area.append(text("아직 작성한 썰이 없어.","empty"));
+    if(!entries.length)area.append(text("아직 작성한 썰이 없습니다.","empty"));
     for(const post of entries){
       const article=el("article",{class:"post"});
       article.append(el("h3",{text:post.title}),text(post.body||"","detail-text"));

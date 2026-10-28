@@ -34,12 +34,12 @@ export function showProjectCreate({types,onCreate}) {
   form.addEventListener("submit",event=>{
     event.preventDefault();
     const projectName=name.value.trim(),projectType=type.value;
-    if(!projectName){error.textContent="프로젝트 이름을 입력해 줘.";name.focus();return}
-    if(!Object.prototype.hasOwnProperty.call(types,projectType)){error.textContent="올바른 프로젝트 유형을 선택해 줘.";return}
+    if(!projectName){error.textContent="프로젝트 이름을 입력해 주세요.";name.focus();return}
+    if(!Object.prototype.hasOwnProperty.call(types,projectType)){error.textContent="올바른 프로젝트 유형을 선택해 주세요.";return}
     save.disabled=true;
     try{
       const result=onCreate(projectName,projectType);
-      if(result===false){error.textContent="프로젝트를 저장하지 못했어. 저장 공간이나 브라우저 설정을 확인해 줘.";save.disabled=false;return}
+      if(result===false){error.textContent="프로젝트를 저장하지 못했어. 저장 공간이나 브라우저 설정을 확인해 주세요.";save.disabled=false;return}
       overlay.remove();
     }catch(err){
       console.error("MYAPPS project creation failed",err);

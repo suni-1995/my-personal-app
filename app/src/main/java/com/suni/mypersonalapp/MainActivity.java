@@ -40,11 +40,11 @@ public class MainActivity extends Activity {
    if(owner==null||owner.length()>180||(!"image".equals(type)&&!"video".equals(type)))return;
    runOnUiThread(()->{
     pickOwner=owner;pickType=type;pickGroup=UUID.randomUUID().toString();pickMax=Math.max(1,Math.min(30,max));
-    Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);
+    Intent intent=new Intent(Intent.ACTION_GET_CONTENT);
     intent.addCategory(Intent.CATEGORY_OPENABLE);
     intent.setType("image".equals(type)?"image/*":"video/*");
     intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,true);
-    try{startActivityForResult(intent,NATIVE_PICKER);}catch(Exception e){respond(errorJson("파일 선택창을 열 수 없어: "+e.getMessage()));}
+    try{startActivityForResult(Intent.createChooser(intent,"갤러리 또는 파일 앱에서 선택"),NATIVE_PICKER);}catch(Exception e){respond(errorJson("파일 선택 창을 열 수 없습니다: "+e.getMessage()));}
    });
   }
   @JavascriptInterface public String update(String records){
@@ -93,26 +93,26 @@ public class MainActivity extends Activity {
   finally{try{m.release();}catch(Exception ignored){}}
  }
  private void savePicked(Intent data){
-  if(data==null){respond(errorJson("선택한 파일이 없어."));return;}
+  if(data==null){respond(errorJson("선택한 파일이 없습니다."));return;}
   java.util.ArrayList<Uri> uris=new java.util.ArrayList<>();
   if(data.getClipData()!=null){for(int i=0;i<data.getClipData().getItemCount();i++)uris.add(data.getClipData().getItemAt(i).getUri());}
   else if(data.getData()!=null)uris.add(data.getData());
-  if(uris.isEmpty()){respond(errorJson("선택된 파일이 없어."));return;}
-  if(uris.size()>pickMax){respond(errorJson("한 번에 "+pickMax+"개까지만 등록할 수 있어."));return;}
+  if(uris.isEmpty()){respond(errorJson("선택된 파일이 없습니다."));return;}
+  if(uris.size()>pickMax){respond(errorJson("한 번에 "+pickMax+"개까지만 등록할 수 있습니다."));return;}
   JSONArray all=readIndex(),created=new JSONArray();
   java.util.ArrayList<File> written=new java.util.ArrayList<>();
   try{
    for(Uri uri:uris){
     String mime=getContentResolver().getType(uri);
-    if(mime==null||!mime.startsWith(pickType+"/"))throw new IOException("파일 형식을 확인해 줘.");
+    if(mime==null||!mime.startsWith(pickType+"/"))throw new IOException("파일 형식을 확인해 주세요.");
     long duration=0;
-    if("video".equals(pickType)){duration=getDuration(uri);if(duration<0||duration>=10000)throw new IOException("영상은 10초 미만만 등록할 수 있어.");}
+    if("video".equals(pickType)){duration=getDuration(uri);if(duration<0||duration>=10000)throw new IOException("영상은 10초 미만만 등록할 수 있습니다.");}
     String id=UUID.randomUUID().toString();File output=new File(mediaDir,id);
     long size=0;
     try(InputStream input=getContentResolver().openInputStream(uri);OutputStream out=new FileOutputStream(output)){
-     if(input==null)throw new IOException("파일을 읽을 수 없어.");
+     if(input==null)throw new IOException("파일을 읽을 수 없습니다.");
      byte[] buffer=new byte[32768];int n;
-     while((n=input.read(buffer))!=-1){size+=n;if(size>30L*1024*1024)throw new IOException("파일은 30MB 이하만 등록할 수 있어.");out.write(buffer,0,n);}
+     while((n=input.read(buffer))!=-1){size+=n;if(size>30L*1024*1024)throw new IOException("파일은 30MB 이하만 등록할 수 있습니다.");out.write(buffer,0,n);}
     }
     written.add(output);
     JSONObject rec=new JSONObject();

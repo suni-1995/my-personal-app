@@ -1,4 +1,4 @@
-import{listFiles,putFiles,deleteOwner,deleteFile}from"./media-store.js?v=phase1-final";
+import{listFiles,putFiles,deleteOwner,deleteFile}from"./media-store.js";
 import {SETTINGS_GROUPS,uid} from "./schema.js";
 
 export function renderWorkspace({area,data,projectId,category,el,btn,heading,modal,persist,render}) {
@@ -28,12 +28,12 @@ export function renderWorkspace({area,data,projectId,category,el,btn,heading,mod
     }
     area.append(folderBar);
     const entries=data.entries.filter(e=>e.projectId===projectId&&e.category===category&&(!settings||(e.group||"세계관")===activeGroup)&&(!activeFolder||e.folderId===activeFolder)).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
-    if(!entries.length)area.append(el("p",{class:"empty",text:"이 위치에 등록된 항목이 없어."}));
+    if(!entries.length)area.append(el("p",{class:"empty",text:"이 위치에 등록된 항목이 없습니다."}));
     for(const entry of entries){
       const row=el("div",{class:"item"});
       row.append(btn((settings?"📄 ":"👤 ")+(entry.title||"제목 없음"),()=>settings?entryEditor(entry):characterDetail(entry),"name"));
       row.append(btn("편집",()=>entryEditor(entry)));
-      row.append(btn("삭제",()=>{if(!confirm("이 항목을 삭제할까?"))return;const old=data.entries;data.entries=old.filter(x=>x.id!==entry.id);if(!persist()){data.entries=old;return}if(!settings)deleteOwner("character:"+entry.id).catch(console.warn);view()},"danger"));
+      row.append(btn("삭제",()=>{if(!confirm("이 항목을 삭제하시겠습니까?"))return;const old=data.entries;data.entries=old.filter(x=>x.id!==entry.id);if(!persist()){data.entries=old;return}if(!settings)deleteOwner("character:"+entry.id).catch(console.warn);view()},"danger"));
       area.append(row);
     }
   };
@@ -47,7 +47,7 @@ export function renderWorkspace({area,data,projectId,category,el,btn,heading,mod
     panel.append(el("h2",{text:folder.name}));
     panel.append(btn("이름 변경",()=>{shade.remove();folderEditor(folder)}));
     panel.append(btn("폴더 삭제",()=>{
-      if(!confirm("폴더만 삭제하고 안에 있던 항목은 전체 목록에 남길까?"))return;
+      if(!confirm("폴더만 삭제하고 안에 있던 항목은 전체 목록에 남기시겠습니까?"))return;
       const oldFolders=data.folders,changed=data.entries.filter(e=>e.projectId===projectId&&e.category===category&&e.folderId===folder.id);
       const oldIds=changed.map(e=>e.folderId);
       changed.forEach(e=>e.folderId="");
@@ -103,7 +103,7 @@ export function renderWorkspace({area,data,projectId,category,el,btn,heading,mod
     if(entry.baseSetting)info.append(el("p",{text:"기본 설정: "+entry.baseSetting}));
     if(entry.image){
       const image=el("img",{src:entry.image,alt:entry.title,class:"character-image",loading:"lazy"});
-      image.addEventListener("error",()=>{image.remove();info.append(el("p",{class:"hint",text:"이미지 주소를 확인해 줘."}))});
+      image.addEventListener("error",()=>{image.remove();info.append(el("p",{class:"hint",text:"이미지 주소를 확인해 주세요."}))});
       info.append(image);
     }
     area.append(info);
@@ -118,7 +118,7 @@ export function renderWorkspace({area,data,projectId,category,el,btn,heading,mod
         img.addEventListener("load",()=>URL.revokeObjectURL(url),{once:true});
         img.addEventListener("error",()=>URL.revokeObjectURL(url),{once:true});
         local.append(img);
-        local.append(btn("등록 이미지 삭제",async()=>{if(!confirm("캐릭터 이미지를 삭제할까?"))return;try{await deleteOwner("character:"+entry.id);characterDetail(entry)}catch(e){alert(e.message)}},"danger"));
+        local.append(btn("등록 이미지 삭제",async()=>{if(!confirm("캐릭터 이미지를 삭제하시겠습니까?"))return;try{await deleteOwner("character:"+entry.id);characterDetail(entry)}catch(e){alert(e.message)}},"danger"));
       }
     }).catch(e=>local.append(el("p",{class:"hint",text:"이미지 저장소를 열 수 없어: "+e.message})));
     const tabs=["설명","인물 관계","연결 문서","이미지","캐릭터송","타임라인"];
@@ -126,9 +126,9 @@ export function renderWorkspace({area,data,projectId,category,el,btn,heading,mod
     for(const name of tabs)nav.append(btn(name,()=>{
       for(const child of nav.children)child.classList.toggle("active",child.textContent===name);
       content.replaceChildren();
-      if(name==="설명")content.append(el("p",{class:"detail-text",text:entry.body||"설명이 아직 없어."}));
+      if(name==="설명")content.append(el("p",{class:"detail-text",text:entry.body||"설명이 아직 없습니다."}));
       else if(name==="이미지"&&entry.image)content.append(el("img",{src:entry.image,alt:entry.title,class:"character-image"}));
-      else content.append(el("p",{class:"hint",text:name+" 세부 기능은 추후 개발 단계에서 구현할 예정이야."}));
+      else content.append(el("p",{class:"hint",text:name+" 세부 기능은 추후 개발 단계에서 구현할 예정입니다."}));
     },"nav"+(name==="설명"?" active":"")));
     area.append(nav,content);
     nav.firstChild.click();
