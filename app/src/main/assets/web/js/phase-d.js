@@ -1,72 +1,22 @@
-import{renderMediaArea,renderComicFiles}from"./media.js?v=media-batches-1";
-import{deleteOwner}from"./media-store.js?v=phase1-final";
-import {uid} from "./schema.js";
-
-export function renderPhaseD({area,data,projectId,category,el,btn,heading,modal,persist}) {
-  const fan=category==="fanworks";
-  const items=()=>data.entries.filter(e=>e&&e.projectId===projectId&&e.category===category);
-  const view=()=>{
-    area.replaceChildren();
-    const bar=heading(fan?"창작물":"이미지/영상");
-    if(fan)bar.append(btn("+ 창작물",()=>edit(),"primary"));
-    area.append(bar);
-    if(!fan){
-      renderMediaArea({area,projectId,btn,heading});
-      return;
-    }
-    const records=items().sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
-    if(!records.length)area.append(el("p",{class:"empty",text:"아직 보관한 창작물이 없어."}));
-    for(const item of records){
-      const row=el("div",{class:"item"});
-      row.append(btn((item.kind==="comic"?"이미지(만화) · ":"글(소설) · ")+item.title,()=>detail(item),"name"));
-      row.append(btn("편집",()=>edit(item)));
-      row.append(btn("삭제",()=>remove(item),"danger"));
-      area.append(row);
-    }
-  };
-  function edit(item){
-    const fields=[
-      {key:"title",label:"제목",required:true,value:item?.title||""},
-      {key:"kind",label:"유형",options:[["novel","글(소설)"],["comic","이미지(만화)"]],value:item?.kind||"novel"},
-      {key:"source",label:"출처 링크 (선택)",value:item?.source||""},
-      {key:"body",label:"글 내용 / 이미지 자료 메모",multiline:true,value:item?.body||""}
-    ];
-    modal(item?"창작물 편집":"창작물 생성",fields,v=>{
-      if(!v.title||!["novel","comic"].includes(v.kind))return false;
-      if(v.source){try{const url=new URL(v.source);if(!["https:","http:"].includes(url.protocol))throw Error("protocol")}catch{alert("출처 링크는 http 또는 https 주소만 입력해 줘.");return false}}
-      const prev=item?{...item}:null;
-      if(item)Object.assign(item,v,{updatedAt:Date.now()});
-      else data.entries.push({id:uid(),projectId,category,...v,updatedAt:Date.now()});
-      if(!persist()){
-        if(item)Object.assign(item,prev);else data.entries.pop();
-        return false;
-      }
-      view();
-    });
-  }
-  function remove(item){
-    if(!confirm("이 창작물을 삭제할까?"))return;
-    const old=data.entries;
-    data.entries=old.filter(x=>x.id!==item.id);
-    if(!persist()){data.entries=old;return}
-    if(item.kind==="comic")deleteOwner("comic:"+item.id).catch(e=>console.warn("첨부 이미지 정리 실패",e));
-    view();
-  }
-  function detail(item){
-    area.replaceChildren();
-    const bar=heading(item.title,view);
-    bar.append(btn("편집",()=>edit(item)));
-    area.append(bar);
-    if(item.kind==="comic"){
-      renderComicFiles({area,item,btn,heading,onBack:view});
-      return;
-    }
-    area.append(el("p",{class:"hint",text:"글(소설)"}));
-    area.append(el("p",{class:"detail-text",text:item.body||"내용 없음"}));
-    if(item.source){
-      const link=el("a",{href:item.source,target:"_blank",rel:"noopener noreferrer",text:"출처 링크"});
-      const source=el("p");source.append(link);area.append(source);
-    }
-  }
-  view();
+import{renderMediaArea,renderComicFiles}from"./media.js?v=suni-inspired-1";
+import{deleteOwner}from"./media-store.js";
+import{uid}from"./schema.js";
+export function renderPhaseD({area,data,projectId,category,el,btn,heading,modal,persist}){
+ if(category==="media"){renderMediaArea({area,projectId,btn,heading});return}
+ let query="",type="",sort="latest";
+ const records=()=>data.entries.filter(e=>e&&e.projectId===projectId&&e.category==="fanworks");
+ function view(){area.replaceChildren();const bar=heading("창작물");bar.append(btn("+ 새 항목",pick,"primary"));area.append(bar);
+ const controls=el("div",{class:"sun-tools"}),search=el("input",{placeholder:"제목 / 태그 / 내용 검색"}),kind=el("select"),order=el("select");
+ const options=(select,pairs,value,fn)=>{for(const[v,t]of pairs)select.append(el("option",{value:v,text:t}));select.value=value;select.addEventListener("change",()=>fn(select.value))};
+ search.value=query;search.addEventListener("input",()=>{query=search.value;list()});
+ options(kind,[["","전체 유형"],["novel","글"],["comic","이미지"]],type,v=>{type=v;list()});
+ options(order,[["latest","최신순"],["oldest","오래된 순"],["name","이름순"]],sort,v=>{sort=v;list()});controls.append(search,kind,order);area.append(controls);
+ const count=el("p",{class:"hint"}),host=el("div",{class:"items"});area.append(count,host);
+ function list(){host.replaceChildren();let xs=records().filter(e=>(!type||e.kind===type)&&[e.title,e.tags,e.body,e.note,e.episode].join(" ").toLowerCase().includes(query.toLowerCase()));xs.sort((a,b)=>sort==="name"?a.title.localeCompare(b.title,"ko"):sort==="latest"?(b.updatedAt||0)-(a.updatedAt||0):(a.updatedAt||0)-(b.updatedAt||0));count.textContent="창작물 "+xs.length+"개";if(!xs.length)host.append(el("p",{class:"empty",text:"등록된 창작물이 없어."}));for(const item of xs){const row=el("div",{class:"sun-work-card"}),body=el("div",{class:"sun-work-body"});body.append(el("strong",{text:(item.kind==="comic"?"🖼️ ":"📝 ")+item.title}),el("p",{class:"hint",text:[item.episode,item.status,item.tags].filter(Boolean).join(" · ")}));if(item.kind==="novel"&&item.body)body.append(el("p",{class:"sun-snippet",text:item.body.slice(0,110)}));row.append(body,btn("열기",()=>detail(item)),btn("편집",()=>edit(item)),btn("삭제",()=>remove(item),"danger"));host.append(row)}}
+ list()}
+ function pick(){const shade=el("div",{class:"modal-shade"}),box=el("div",{class:"modal"});box.append(el("h2",{text:"창작물 유형 선택"}),btn("📝 글",()=>{shade.remove();edit(null,"novel")},"primary"),btn("🖼️ 이미지",()=>{shade.remove();edit(null,"comic")},"primary"),btn("취소",()=>shade.remove()));shade.append(box);document.querySelector("#app").append(shade)}
+ function edit(item,selected){const kind=item?.kind||selected||"novel",fields=[{key:"title",label:"제목",required:true,value:item?.title||""},{key:"tags",label:"태그",value:item?.tags||""}];if(kind==="novel")fields.push({key:"episode",label:"회차 / 부제",value:item?.episode||""},{key:"status",label:"진행 상태",options:[["초안","초안"],["번역중","번역중"],["완성","완성"],["보류","보류"]],value:item?.status||"초안"},{key:"body",label:"본문",multiline:true,value:item?.body||""});else fields.push({key:"note",label:"메모 / 번역 설명",multiline:true,value:item?.note||item?.body||""});fields.push({key:"source",label:"출처 링크 (선택)",value:item?.source||""});modal(item?"창작물 편집":kind==="novel"?"창작물 · 글":"창작물 · 이미지",fields,v=>{if(!v.title)return false;if(v.source){try{if(!["https:","http:"].includes(new URL(v.source).protocol))throw Error()}catch{alert("올바른 http(s) 링크를 입력해 줘.");return false}}const previous=item?{...item}:null;const fresh=item||{id:uid(),projectId,category:"fanworks",kind,createdAt:Date.now()};Object.assign(fresh,v,{updatedAt:Date.now()});if(!item)data.entries.push(fresh);if(!persist()){if(item)Object.assign(item,previous);else data.entries.pop();return false}view()})}
+ function detail(item){area.replaceChildren();if(item.kind==="comic"){renderComicFiles({area,item,btn,heading,onBack:view});return}const bar=heading(item.title,view);bar.append(btn("편집",()=>edit(item)));area.append(bar,el("p",{class:"hint",text:[item.episode,item.status,item.tags].filter(Boolean).join(" · ")}),el("p",{class:"detail-text",text:item.body||"내용 없음"}));if(item.source)area.append(el("a",{href:item.source,target:"_blank",rel:"noopener noreferrer",text:"출처 링크"}))}
+ function remove(item){if(!confirm("창작물을 삭제할까?"))return;const before=data.entries;data.entries=before.filter(e=>e.id!==item.id);if(!persist()){data.entries=before;return}if(item.kind==="comic")deleteOwner("comic:"+item.id).catch(console.warn);view()}
+ view()
 }
