@@ -35,7 +35,7 @@ export function showProjectCreate({types,onCreate}) {
     event.preventDefault();
     const projectName=name.value.trim(),projectType=type.value;
     if(!projectName){error.textContent="프로젝트 이름을 입력해 줘.";name.focus();return}
-    if(!Object.hasOwn(types,projectType)){error.textContent="올바른 프로젝트 유형을 선택해 줘.";return}
+    if(!Object.prototype.hasOwnProperty.call(types,projectType)){error.textContent="올바른 프로젝트 유형을 선택해 줘.";return}
     save.disabled=true;
     try{
       const result=onCreate(projectName,projectType);
