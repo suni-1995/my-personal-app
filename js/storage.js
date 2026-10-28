@@ -1,0 +1,1 @@
+const KEY="creative-studio-v1";const empty=()=>({version:1,projects:[],entries:[]});export function load(){try{const o=JSON.parse(localStorage.getItem(KEY));return o&&o.version===1&&Array.isArray(o.projects)&&Array.isArray(o.entries)?o:empty()}catch{return empty()}}export function save(data){localStorage.setItem(KEY,JSON.stringify(data))}
