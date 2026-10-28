@@ -1,4 +1,4 @@
-import{renderMediaArea,renderComicFiles}from"./media.js?v=phase1-final";
+import{renderMediaArea,renderComicFiles}from"./media.js?v=phase1-final-2";
 import{deleteOwner}from"./media-store.js?v=phase1-final";
 import {uid} from "./schema.js";
 
