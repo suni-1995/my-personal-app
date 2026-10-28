@@ -1,3 +1,4 @@
+import{renderMediaArea,renderComicFiles}from"./media.js?v=media-1";
 import {uid} from "./schema.js";
 
 export function renderPhaseD({area,data,projectId,category,el,btn,heading,modal,persist}) {
@@ -9,7 +10,7 @@ export function renderPhaseD({area,data,projectId,category,el,btn,heading,modal,
     if(fan)bar.append(btn("+ 창작물",()=>edit(),"primary"));
     area.append(bar);
     if(!fan){
-      area.append(el("p",{class:"hint",text:"고급 프로젝트의 이미지·영상 보관 공간이야. 이미지 등록과 영상 길이 검증 등 실제 파일 기능은 2차 개발에서 구현할 예정이야."}));
+      renderMediaArea({area,projectId,btn,heading});
       return;
     }
     const records=items().sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
@@ -54,7 +55,7 @@ export function renderPhaseD({area,data,projectId,category,el,btn,heading,modal,
     const bar=heading(item.title,view);
     bar.append(btn("편집",()=>edit(item)));
     area.append(bar);
-    area.append(el("p",{class:"hint",text:item.kind==="comic"?"이미지(만화) · 이미지 파일 등록과 순서 열람은 2차 개발 범위야.":"글(소설)"}));
+    if(item.kind==="comic"){renderComicFiles({area,item,btn,heading,onBack:view});return}area.append(el("p",{class:"hint",text:"글(소설)"}));
     area.append(el("p",{class:"detail-text",text:item.body||"내용 없음"}));
     if(item.source){
       const link=el("a",{href:item.source,target:"_blank",rel:"noopener noreferrer",text:"출처 링크"});
