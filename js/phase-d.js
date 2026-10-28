@@ -1,5 +1,5 @@
-import{renderMediaArea,renderComicFiles}from"./media.js?v=suni-inspired-1";
-import{deleteOwner,listFiles,putFiles,deleteFile}from"./media-store.js?v=comic-editor-1";
+import{renderMediaArea,renderComicFiles}from"./media.js?v=android-native-1";
+import{deleteOwner,listFiles,putFiles,deleteFile,hasNativeMedia,pickNativeMedia}from"./media-store.js?v=comic-editor-1";
 import{uid}from"./schema.js";
 export function renderPhaseD({area,data,projectId,category,el,btn,heading,modal,persist}){
  if(category==="media"){renderMediaArea({area,projectId,btn,heading});return}
@@ -28,9 +28,12 @@ export function renderPhaseD({area,data,projectId,category,el,btn,heading,modal,
   const pickerLabel=el("label",{text:"이미지 추가 (최대 30장)"});
   const picker=el("input",{type:"file",accept:"image/*"});picker.multiple=true;
   pickerLabel.append(picker);form.append(pickerLabel);
+  if(hasNativeMedia()){pickerLabel.style.display="none";const nativeButton=el("button",{type:"button",text:"이미지 선택 (Android 앱 저장)"});nativeButton.addEventListener("click",async()=>{
+    try{const id=item?.id||draftId,files=await pickNativeMedia("comic:"+id,"image",30);nativeAdded+=files.length;status.textContent="선택한 이미지 "+nativeAdded+"장";for(const f of files)preview.append(el("p",{class:"hint",text:"🖼️ "+f.name}))}catch(e){status.textContent="파일 등록 실패: "+e.message}
+  });form.append(nativeButton)}
   const status=el("p",{class:"hint",text:"이미지를 선택해 줘."}),preview=el("div",{class:"sun-image-selection"});
   form.append(status,preview);
-  let existingCount=0,selectedFiles=[],savedFiles=[];
+  const draftId=item?.id||uid();let nativeAdded=0,existingCount=0,selectedFiles=[],savedFiles=[];
   if(item)listFiles(owner).then(files=>{existingCount=files.length;status.textContent="기존 이미지 "+existingCount+"장 · 추가 선택 0장"}).catch(e=>{status.textContent="기존 이미지 확인 오류: "+e.message});
   picker.addEventListener("change",()=>{
     selectedFiles=Array.from(picker.files||[]);
@@ -39,7 +42,7 @@ export function renderPhaseD({area,data,projectId,category,el,btn,heading,modal,
     for(const file of selectedFiles)preview.append(el("p",{class:"hint",text:"🖼️ "+file.name}));
   });
   const footer=el("footer"),cancel=el("button",{type:"button",text:"취소"}),save=el("button",{type:"submit",class:"primary",text:"저장"}),error=el("p",{class:"hint"});
-  cancel.addEventListener("click",()=>shade.remove());footer.append(cancel,save);form.append(error,footer);
+  cancel.addEventListener("click",async()=>{if(!item&&nativeAdded){await deleteOwner("comic:"+draftId).catch(console.warn)}shade.remove()});footer.append(cancel,save);form.append(error,footer);
   form.addEventListener("submit",async event=>{
     event.preventDefault();
     const name=title.value.trim(),link=source.value.trim();
@@ -48,7 +51,7 @@ export function renderPhaseD({area,data,projectId,category,el,btn,heading,modal,
     if(selectedFiles.some(f=>!f.type.startsWith("image/"))){error.textContent="이미지 파일만 등록할 수 있어.";return}
     if(existingCount+selectedFiles.length>30){error.textContent="이미지는 최대 30장이야.";return}
     save.disabled=true;error.textContent="이미지를 저장하는 중...";
-    const newItem=!item,fresh=item||{id:uid(),projectId,category:"fanworks",kind:"comic",createdAt:Date.now()},previous=item?{...item}:null;
+    const newItem=!item,fresh=item||{id:draftId,projectId,category:"fanworks",kind:"comic",createdAt:Date.now()},previous=item?{...item}:null;
     try{
       const current=await listFiles("comic:"+fresh.id);
       if(current.length+selectedFiles.length>30)throw Error("이미지는 최대 30장이야.");
@@ -65,7 +68,7 @@ export function renderPhaseD({area,data,projectId,category,el,btn,heading,modal,
       if(!persist())throw Error("창작물 정보 저장에 실패했어.");
       shade.remove();view();
     }catch(e){
-      if(newItem)data.entries=data.entries.filter(x=>x.id!==fresh.id);
+      if(newItem){data.entries=data.entries.filter(x=>x.id!==fresh.id);if(nativeAdded)await deleteOwner("comic:"+draftId).catch(console.warn)}
       else if(previous)Object.assign(item,previous);
       for(const record of savedFiles)try{await deleteFile(record.id)}catch(cleanupError){console.warn("첨부 이미지 정리 실패",cleanupError)}
       savedFiles=[];error.textContent="저장 실패: "+e.message;save.disabled=false;
