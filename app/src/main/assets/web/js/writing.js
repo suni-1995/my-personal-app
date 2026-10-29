@@ -1,4 +1,5 @@
 import {uid} from "./schema.js";
+import {editSimultaneous} from "./timeline-simultaneous.js";
 
 export function renderWriting({area,data,projectId,category,el,btn,heading,modal,persist,initialEventId=null}) {
   const isTimeline=category==="timeline";
@@ -48,6 +49,7 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
     r.append(btn(item.title,open,"name"));
     r.append(btn("편집",()=>createOrEdit(item,item.kind,item.parentId||"",item.worldline||"main")));
     r.append(btn("삭제",()=>remove(item),"danger"));
+    if(isTimeline&&["event","detail"].includes(item.kind))r.append(btn("동시 사건",()=>editSimultaneous({item,data,projectId,el,btn,persist,onChange:view})));
     return r;
   }
   function navigation(title,onBack){
@@ -123,6 +125,7 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
     area.replaceChildren();navigation(item.title,()=>{parentId=item.parentId||"";view()});
     area.append(text(item.body||"내용 없음","detail-text"));
     area.append(btn("편집",()=>createOrEdit(item,item.kind,item.parentId||"",item.worldline||"main")));
+    if(isTimeline&&["event","detail"].includes(item.kind))area.append(btn("동시 사건",()=>editSimultaneous({item,data,projectId,el,btn,persist,onChange:()=>showDetail(item)})));
   }
   function renderNovels(){
     const current=find(parentId);
