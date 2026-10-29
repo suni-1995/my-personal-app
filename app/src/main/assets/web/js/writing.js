@@ -145,11 +145,14 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
     area.append(controls);
   }
   function printReading(title,body){
+    const esc=value=>String(value).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+    const html='<!doctype html><html lang="ko"><meta charset="utf-8"><title>'+esc(title)+'</title><style>body{font-family:serif;max-width:800px;margin:48px auto;padding:0 25px;line-height:1.9}article{white-space:pre-wrap;overflow-wrap:anywhere}@media print{body{margin:0;max-width:none}}</style><h1>'+esc(title)+'</h1><article>'+esc(body)+'</article></html>';
+    if(window.AndroidPdf?.print){
+      try{const bytes=new TextEncoder().encode(html);let raw="";for(const byte of bytes)raw+=String.fromCharCode(byte);window.AndroidPdf.print(btoa(raw));return}catch(err){alert("PDF 저장 화면을 열지 못했습니다: "+err.message);return}
+    }
     const w=window.open("","_blank");
     if(!w){alert("새 창이 차단되어 PDF 저장 화면을 열 수 없습니다.");return}
-    const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-    w.document.write('<!doctype html><html lang="ko"><meta charset="utf-8"><title>'+esc(title)+'</title><style>body{font-family:serif;max-width:800px;margin:48px auto;padding:0 25px;line-height:1.9}article{white-space:pre-wrap;overflow-wrap:anywhere}@media print{body{margin:0;max-width:none}}</style><h1>'+esc(title)+'</h1><article>'+esc(body)+'</article></html>');
-    w.document.close();w.focus();w.print();
+    w.document.write(html);w.document.close();w.focus();w.print();
   }
   function renderNovels(){
     const current=find(parentId);
