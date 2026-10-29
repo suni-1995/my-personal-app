@@ -146,3 +146,15 @@ header>button{flex:0 0 auto}
 .my-sns-quote-picker .modal{max-height:100%;overflow-y:auto}
 
 .my-sns-viewport-modal{position:fixed;left:0;right:0;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:8px 12px;z-index:1000}.my-sns-viewport-modal .modal{max-height:100%;overflow:auto}
+
+/* Android correction: restore readable header and avoid sticky composer covering posts. */
+@media(max-width:850px){
+ header{display:grid!important;grid-template-columns:minmax(90px,1fr) minmax(130px,1.4fr) auto!important;grid-template-rows:auto auto!important;gap:10px!important;padding:16px!important;align-items:center!important}
+ header h1{grid-column:1!important;grid-row:1!important;font-size:21px!important}
+ header>select{grid-column:2!important;grid-row:1!important;order:initial!important;width:100%!important;max-width:none!important;min-width:0!important;flex:initial!important;font-size:16px!important;padding:11px!important}
+ header>button{grid-column:3!important;grid-row:1!important;order:initial!important;font-size:16px!important;padding:9px 12px!important}
+ header>.app-test-version{grid-column:1/-1!important;grid-row:2!important;order:initial!important;justify-self:center!important;flex:initial!important;min-width:0!important;max-width:100%!important;font-size:13px!important;letter-spacing:normal!important;white-space:nowrap!important;overflow:visible!important}
+ .my-sns-composer,.my-sns-keyboard .my-sns-composer{position:relative!important;bottom:auto!important;z-index:auto!important;scroll-margin-bottom:12px}
+ .my-sns-feed{padding-bottom:12px}
+ .my-sns-post:last-child{margin-bottom:8px}
+}
