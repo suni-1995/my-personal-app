@@ -9,6 +9,7 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
   let worldline=initialEvent?.worldline||"main";
   let parentId=initialEvent?.kind==="detail"?(initialEvent.parentId||""):(initialEvent?.id||"");
   let activeThreadId="default";
+  let snsEvents=new AbortController();
   let openingDetail=initialEvent?.kind==="detail"?initialEvent:null;
   const items=()=>data.entries.filter(e=>e && e.projectId===projectId && e.category===category);
   const find=id=>items().find(e=>e.id===id);
@@ -240,9 +241,8 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
     const box=el("div",{class:"my-sns-composer"});
     const editor=el("textarea",{placeholder:"지금 떠오른 이야기를 남겨보세요.",class:"my-sns-editor"});
     editor.rows=3;
-    box.append(editor);
     const pending=el("div",{class:"my-sns-pending"});
-    box.append(pending);
+    box.append(pending,editor);
     let quoteRef=null,threadRef=null;
     const allQuotes=()=>data.entries.filter(e=>e&&e.projectId===projectId&&e.category!=="posts"&&["settings","characters","timeline","novels","fanworks"].includes(e.category)&&e.kind!=="worldline");
     const quoteName=x=>({settings:"설정",characters:"캐릭터",timeline:"타임라인",novels:"장문",fanworks:"창작물"}[x.category]||x.category)+" · "+(x.title||"제목 없음");
@@ -272,12 +272,18 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
       const post={id:uid(),projectId,category:"posts",kind:"post",title:body.slice(0,40),body,threadId:activeThreadId,quoteRef,threadLinkId:threadRef,createdAt:Date.now(),updatedAt:Date.now()};
       data.entries.push(post);
       if(!persist()){data.entries.pop();return}
-      editor.value="";quoteRef=null;threadRef=null;view();
+      editor.value="";quoteRef=null;threadRef=null;updatePending();
+      // Keep the existing composer focused so Android does not dismiss the keyboard.
+      const empty=feed.querySelector(".empty");if(empty)empty.remove();
+      feed.append(renderSnsPost(post));
+      editor.focus({preventScroll:true});
+      requestAnimationFrame(()=>{box.scrollIntoView({block:"end",behavior:"instant"});editor.focus({preventScroll:true})});
     },"primary"));
     box.append(actions);root.append(box);
     const shown=entries().filter(e=>(e.threadId||"default")===activeThreadId).sort((a,b)=>(a.createdAt??a.updatedAt??0)-(b.createdAt??b.updatedAt??0));
     if(!shown.length)feed.append(el("p",{class:"empty",text:"아직 이 타래에 게시물이 없습니다."}));
-    for(const post of shown){
+    for(const post of shown)feed.append(renderSnsPost(post));
+    function renderSnsPost(post){
       const article=el("article",{class:"my-sns-post"});
       article.append(el("div",{class:"my-sns-post-body",text:post.body||post.title||""}));
       const ref=post.quoteRef||(post.quoteId?{id:post.quoteId,category:"posts"}:null);
@@ -307,10 +313,14 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
         const old=data.entries;data.entries=old.filter(x=>x.id!==post.id);
         if(!persist())data.entries=old;else view();
       },"danger"));
-      article.append(footer);feed.append(article);
+      article.append(footer);return article;
     }
+    editor.addEventListener("focus",()=>{root.classList.add("my-sns-keyboard");requestAnimationFrame(()=>box.scrollIntoView({block:"end"}))});
+    editor.addEventListener("blur",()=>root.classList.remove("my-sns-keyboard"));
+    area.addEventListener("pointerdown",e=>{if(!box.contains(e.target)&&!e.target.closest(".modal-shade")&&document.activeElement===editor)editor.blur()},{signal:snsEvents.signal});
   }
   function view(){
+    snsEvents.abort();snsEvents=new AbortController();
     area.replaceChildren();
     if(isTimeline){if(openingDetail){const item=openingDetail;openingDetail=null;showDetail(item)}else renderTimeline();}
     else if(isNovel)renderNovels();
