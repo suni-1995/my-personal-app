@@ -126,6 +126,7 @@ export function renderWritingPart({area,data,projectId,category,el,btn,heading,m
     area.addEventListener("pointerdown",e=>{if(!box.contains(e.target)&&!e.target.closest(".modal-shade")&&document.activeElement===editor)editor.blur()},{signal:snsEvents.signal});
   }
   function view(){
+    snsEvents.abort();snsEvents=new AbortController();
     area.replaceChildren();
     renderPosts();
   }
