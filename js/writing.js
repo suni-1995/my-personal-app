@@ -127,26 +127,76 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
     area.append(btn("편집",()=>createOrEdit(item,item.kind,item.parentId||"",item.worldline||"main")));
     if(isTimeline&&["event","detail"].includes(item.kind))area.append(btn("동시 사건",()=>editSimultaneous({item,data,projectId,el,btn,persist,onChange:()=>showDetail(item)})));
   }
+  function novelReader(chapter){
+    const chapters=items().filter(e=>e.kind==="chapter"&&e.parentId===chapter.parentId)
+      .sort((a,b)=>(a.order??a.updatedAt??0)-(b.order??b.updatedAt??0));
+    const index=chapters.findIndex(e=>e.id===chapter.id);
+    area.replaceChildren();
+    const season=find(chapter.parentId),work=find(season?.parentId);
+    const bar=navigation([work?.title,season?.title,chapter.title].filter(Boolean).join(" · "),()=>{parentId=chapter.parentId||"";view()});
+    bar.append(btn("PDF로 저장 / 인쇄",()=>printReading(chapter.title,chapter.body||"")));
+    area.append(text(chapter.body||"내용 없음","detail-text reading-body"));
+    const controls=el("div",{class:"toolbar"});
+    if(index>0)controls.append(btn("← 이전 회차",()=>novelReader(chapters[index-1])));
+    controls.append(btn("회차 목록",()=>{parentId=chapter.parentId||"";view()}));
+    if(index>=0&&index<chapters.length-1)controls.append(btn("다음 회차 →",()=>novelReader(chapters[index+1])));
+    controls.append(btn("회차 편집",()=>createOrEdit(chapter,"chapter",chapter.parentId)));
+    area.append(controls);
+  }
+  function printReading(title,body){
+    const w=window.open("","_blank");
+    if(!w){alert("새 창이 차단되어 PDF 저장 화면을 열 수 없습니다.");return}
+    const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+    w.document.write('<!doctype html><html lang="ko"><meta charset="utf-8"><title>'+esc(title)+'</title><style>body{font-family:serif;max-width:800px;margin:48px auto;padding:0 25px;line-height:1.9}article{white-space:pre-wrap;overflow-wrap:anywhere}@media print{body{margin:0;max-width:none}}</style><h1>'+esc(title)+'</h1><article>'+esc(body)+'</article></html>');
+    w.document.close();w.focus();w.print();
+  }
   function renderNovels(){
     const current=find(parentId);
-    if(current?.kind==="chapter"){showDetail(current);return}
+    if(current?.kind==="chapter"){novelReader(current);return}
     const bar=navigation(current?.title||"장문",current?()=>{parentId=current.parentId||"";view()}:null);
     const level=current?.kind==="work"?"season":current?.kind==="season"?"chapter":"work";
     bar.append(btn("+ "+(level==="work"?"작품":level==="season"?"시즌":"회차"),()=>createOrEdit(null,level,parentId),"primary"));
     const entries=items().filter(e=>(e.parentId||"")===parentId&&(e.kind||"work")===level);
-    displayEntries(entries,item=>{parentId=item.id;view()});
+    displayEntries(entries,item=>{if(item.kind==="chapter")novelReader(item);else{parentId=item.id;view()}});
   }
   function renderPosts(){
     const bar=navigation("썰");
     bar.append(btn("+ 게시물",()=>createOrEdit(null,"post"),"primary"));
-    const entries=items().filter(e=>!e.kind||e.kind==="post").sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
-    if(!entries.length)area.append(text("아직 작성한 썰이 없어.","empty"));
-    for(const post of entries){
+    area.append(text("게시물에 답글을 연결하거나 다른 게시물을 인용할 수 있습니다.","hint"));
+    const all=items().filter(e=>!e.kind||e.kind==="post");
+    const roots=all.filter(e=>!e.parentId||!all.some(p=>p.id===e.parentId))
+      .sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+    if(!roots.length)area.append(text("아직 작성한 썰이 없습니다.","empty"));
+    const seen=new Set();
+    function drawPost(post,depth){
+      if(seen.has(post.id))return;seen.add(post.id);
       const article=el("article",{class:"post"});
-      article.append(el("h3",{text:post.title}),text(post.body||"","detail-text"));
-      article.append(btn("수정",()=>createOrEdit(post,"post")),btn("삭제",()=>remove(post),"danger"));
+      article.style.marginLeft=Math.min(depth,5)*14+"px";
+      article.append(el("h3",{text:post.title}));
+      if(post.quoteId){
+        const quoted=all.find(e=>e.id===post.quoteId);
+        article.append(el("blockquote",{class:"post-quote",text:quoted?"인용: "+quoted.title+"\n"+(quoted.body||""):"인용한 게시물이 삭제되었습니다."}));
+      }
+      article.append(text(post.body||"","detail-text"));
+      article.append(btn("답글",()=>postEditor(post,"reply")),btn("인용",()=>postEditor(post,"quote")),
+        btn("수정",()=>createOrEdit(post,"post")),btn("삭제",()=>remove(post),"danger"));
       area.append(article);
+      all.filter(e=>e.parentId===post.id).sort((a,b)=>(a.updatedAt||0)-(b.updatedAt||0))
+        .forEach(child=>drawPost(child,depth+1));
     }
+    roots.forEach(post=>drawPost(post,0));
+  }
+  function postEditor(parent,mode){
+    modal(mode==="reply"?"답글 작성":"인용 게시물 작성",[
+      {key:"title",label:"제목",required:true,value:mode==="reply"?"Re: "+parent.title:""},
+      {key:"body",label:"내용",multiline:true,value:""}
+    ],v=>{
+      const fresh={id:uid(),projectId,category:"posts",kind:"post",title:v.title,body:v.body||"",
+        parentId:mode==="reply"?parent.id:"",quoteId:mode==="quote"?parent.id:"",updatedAt:Date.now()};
+      data.entries.push(fresh);
+      if(!persist()){data.entries=data.entries.filter(e=>e.id!==fresh.id);return false}
+      view();
+    });
   }
   function view(){
     area.replaceChildren();
