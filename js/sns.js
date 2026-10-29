@@ -8,11 +8,10 @@ export function renderWritingPart({area,data,projectId,category,el,btn,heading,m
     const threads=()=>data.socialThreads.filter(t=>t.projectId===projectId);
     const entries=()=>items().filter(e=>!e.kind||e.kind==="post");
     // Existing posts are shown in the default thread without changing their data.
-    let current=threads().find(t=>t.id===activeThreadId);
-    if(!current){
-      current=threads()[0]||null;
-      activeThreadId=current?.id||"default";
-    }
+    // The default thread is virtual and deliberately has no socialThreads record.
+    // Do not redirect it to the first custom thread when following a thread link.
+    if(activeThreadId!=="default"&&!threads().some(t=>t.id===activeThreadId))activeThreadId="default";
+    let current=threads().find(t=>t.id===activeThreadId)||null;
     const root=el("div",{class:"my-sns"});
     area.append(root);
     const top=el("div",{class:"my-sns-top"});
