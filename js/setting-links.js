@@ -12,7 +12,7 @@ export function renderSettingLinks({area,document,data,projectId,el,btn,persist,
   const shade=el("div",{class:"modal-shade"}),panel=el("div",{class:"modal"});
   panel.append(el("h2",{text:title}));build(panel,()=>shade.remove());
   shade.append(panel);shade.addEventListener("click",e=>{if(e.target===shade)shade.remove()});
-  document.querySelector("#app").append(shade);
+  area.ownerDocument.querySelector("#app").append(shade);
  }
  function add(){
   const available=targets().filter(x=>!refs().some(r=>r.id===x.id));
