@@ -1,4 +1,5 @@
 import {uid} from "./schema.js";
+import {renderRelationshipGraph} from "./relationship-graph.js";
 
 // 한 관계를 두 캐릭터가 공유한다. 기존 캐릭터 항목은 변경하지 않는다.
 export function renderCharacterRelations({content,data,projectId,entry,el,btn,modal,persist}) {
@@ -46,6 +47,9 @@ export function renderCharacterRelations({content,data,projectId,entry,el,btn,mo
     bar.append(btn("+ 관계 추가",()=>editor(null),"primary"));
     content.append(bar);
     const relations=current();
+    const graphHost=el("div",{class:"relationship-graph"});
+    content.append(graphHost);
+    renderRelationshipGraph({host:graphHost,data,projectId,entry});
     if(!relations.length){content.append(el("p",{class:"hint",text:"등록된 인물 관계가 없습니다."}));return}
     for(const r of relations){
       const target=other(r),line=el("div",{class:"item"});
