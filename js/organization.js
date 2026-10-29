@@ -34,6 +34,30 @@ export function renderOrganization({area,document,data,projectId,el,btn,modal,pe
   if(!confirm("이 구성원을 삭제하시겠습니까? 하위 구성원은 상위 없음으로 변경됩니다."))return;
   save(members().filter(x=>x.id!==m.id).map(x=>x.parentId===m.id?{...x,parentId:""}:x));
  }
+ function graph(){
+  const wrap=el("section",{class:"org-chart"});
+  wrap.append(el("h3",{text:"조직도"}));
+  const all=members(),known=new Set(all.map(m=>m.id));
+  const children=parent=>all.filter(m=>(known.has(m.parentId)?m.parentId:"")===parent);
+  const visited=new Set();
+  function branch(parent,depth){
+   const list=el("ul",{class:"org-tree"});
+   for(const m of children(parent)){
+    if(visited.has(m.id))continue;
+    visited.add(m.id);
+    const node=el("li",{class:"org-node"}),card=el("div",{class:"org-node-card"});
+    card.append(el("strong",{text:memberName(m)}));
+    if(m.role)card.append(el("span",{class:"hint",text:m.role}));
+    card.append(btn("수정",()=>editor(m)));
+    node.append(card);
+    if(depth<all.length)node.append(branch(m.id,depth+1));
+    list.append(node);
+   }
+   return list;
+  }
+  wrap.append(branch("",0));
+  return wrap;
+ }
  function draw(){
   area.replaceChildren();
   const bar=el("div",{class:"toolbar"});
@@ -41,6 +65,7 @@ export function renderOrganization({area,document,data,projectId,el,btn,modal,pe
   area.append(bar);
   if(document.body)area.append(el("p",{class:"detail-text",text:document.body}));
   if(!members().length)area.append(el("p",{class:"hint",text:"등록된 구성원이 없습니다."}));
+  if(members().length)area.append(graph());
   for(const m of members()){
    const parent=members().find(x=>x.id===m.parentId);
    const line=el("div",{class:"item"});
