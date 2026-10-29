@@ -107,3 +107,16 @@ header>button{flex:0 0 auto}
 .timeline-simultaneous-row strong{flex:1;min-width:160px;overflow-wrap:anywhere}
 .timeline-simultaneous-item .detail-text{white-space:pre-wrap;overflow-wrap:anywhere;display:block;max-height:none;line-clamp:unset;-webkit-line-clamp:unset;margin:12px 0}
 .timeline-simultaneous-bottom{display:flex;justify-content:flex-end}
+
+/* Android-only: single-line version header, keyboard-aware SNS composer. */
+@media(max-width:850px){
+ header{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) auto;align-items:center;gap:8px 10px}
+ header h1{grid-column:1;grid-row:1}
+ header>select{grid-column:2;grid-row:1;margin:0;width:100%;max-width:none;min-width:0}
+ header>button{grid-column:3;grid-row:1;white-space:nowrap}
+ header>.app-test-version{grid-column:1/-1;grid-row:2;position:static;transform:none;max-width:none;white-space:nowrap;overflow:visible;text-align:center;justify-self:center;font-size:12px;flex:none}
+}
+.my-sns-composer{scroll-margin-bottom:8px}
+.my-sns-pending:not(:empty){max-height:24vh;overflow:auto;margin-bottom:8px}
+.my-sns-keyboard .my-sns-composer{position:sticky;bottom:0;z-index:10}
+.my-sns-keyboard .my-sns-editor{min-height:72px;max-height:23vh}
