@@ -1,5 +1,9 @@
 package com.suni.mypersonalapp;
 import android.app.Activity;
+import android.content.Context;
+import android.print.PrintManager;
+import android.print.PrintAttributes;
+import android.util.Base64;
 import android.os.Bundle;
 import android.content.Intent;
 import android.database.Cursor;
@@ -30,6 +34,29 @@ public class MainActivity extends Activity {
  private synchronized void writeIndex(JSONArray a){prefs.edit().putString("records",a.toString()).commit();}
  private void respond(String data){final String literal=JSONObject.quote(data);runOnUiThread(()->webView.evaluateJavascript("window.__myappsNativeMediaResult&&window.__myappsNativeMediaResult("+literal+")",null));}
  private String safeId(String id){return id!=null&&id.matches("[a-zA-Z0-9-]{1,80}")?id:null;}
+ private WebView printView;
+ private class PdfBridge{
+  @JavascriptInterface public void print(String encoded){
+   if(encoded==null||encoded.length()>3000000)return;
+   runOnUiThread(()->{
+    try{
+     byte[] bytes=Base64.decode(encoded,Base64.DEFAULT);
+     String html=new String(bytes,java.nio.charset.StandardCharsets.UTF_8);
+     if(printView!=null){printView.destroy();printView=null;}
+     printView=new WebView(MainActivity.this);
+     printView.setWebViewClient(new WebViewClient(){
+      @Override public void onPageFinished(WebView view,String url){
+       try{
+        PrintManager manager=(PrintManager)getSystemService(Context.PRINT_SERVICE);
+        if(manager!=null)manager.print("MYAPPS 문서",view.createPrintDocumentAdapter("MYAPPS 문서"),new PrintAttributes.Builder().build());
+       }catch(Exception ignored){}
+      }
+     });
+     printView.loadDataWithBaseURL(BASE,html,"text/html","UTF-8",null);
+    }catch(Exception ignored){}
+   });
+  }
+ }
  private class MediaBridge{
   @JavascriptInterface public String list(String owner){
    JSONArray list=new JSONArray(),all=readIndex();
@@ -135,6 +162,7 @@ public class MainActivity extends Activity {
   webView.getSettings().setDomStorageEnabled(true);
   webView.getSettings().setAllowFileAccess(false);
   webView.addJavascriptInterface(new MediaBridge(),"AndroidMedia");
+  webView.addJavascriptInterface(new PdfBridge(),"AndroidPdf");
   webView.setWebChromeClient(new WebChromeClient(){
    @Override public boolean onShowFileChooser(WebView v,ValueCallback<Uri[]> cb,FileChooserParams params){
     if(fileCallback!=null)fileCallback.onReceiveValue(null);fileCallback=cb;
