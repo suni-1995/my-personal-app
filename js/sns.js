@@ -113,6 +113,7 @@ export function renderWritingPart({area,data,projectId,category,el,btn,heading,m
     }
   }
   function view(){
+    
     area.replaceChildren();
     renderPosts();
   }
