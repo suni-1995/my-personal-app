@@ -283,7 +283,6 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
     },"primary"));
     box.append(actions);root.append(box);
     const send=actions.lastElementChild;send.addEventListener("pointerdown",keepFocus);
-    send.addEventListener("touchstart",keepFocus,{passive:false});
     const shown=entries().filter(e=>(e.threadId||"default")===activeThreadId).sort((a,b)=>(a.createdAt??a.updatedAt??0)-(b.createdAt??b.updatedAt??0));
     if(!shown.length)feed.append(el("p",{class:"empty",text:"아직 이 타래에 게시물이 없습니다."}));
     for(const post of shown)feed.append(renderSnsPost(post));
