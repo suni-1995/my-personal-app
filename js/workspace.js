@@ -2,7 +2,7 @@ import{listFiles,putFiles,deleteOwner,deleteFile}from"./media-store.js?v=phase1-
 import {SETTINGS_GROUPS,uid} from "./schema.js";
 import {renderCharacterRelations} from "./character-relations.js";
 import {renderCharacterDocuments} from "./character-documents.js";
-import {renderCharacterTimeline} from "./character-timeline.js";
+import {renderCharacterTimeline} from "./character-timeline.js?v=phase2-step4-3";
 
 export function renderWorkspace({area,data,projectId,category,el,btn,heading,modal,persist,render,onOpenTimeline}) {
   if(!Array.isArray(data.folders)) data.folders=[];
