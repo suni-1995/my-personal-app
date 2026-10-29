@@ -57,7 +57,7 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
   }
   function displayEntries(entries,open){
     if(!entries.length)area.append(text("아직 등록한 항목이 없어.","empty"));
-    const ordered=entries.sort((a,b)=>(a.order??a.updatedAt??0)-(b.order??b.updatedAt??0));
+    const ordered=entries.slice().sort((a,b)=>(a.order??a.createdAt??a.updatedAt??0)-(b.order??b.createdAt??b.updatedAt??0));
     for(let i=0;i<ordered.length;i++){
       const item=ordered[i],r=row(item,()=>open(item));
       if(isTimeline){
@@ -73,6 +73,7 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
     const reordered=records.slice();
     [reordered[index],reordered[other]]=[reordered[other],reordered[index]];
     reordered.forEach((e,i)=>e.order=i);
+    // 순서 이동 후 전체 목록에서 변경된 값을 저장한다.
     if(!persist()){for(const p of snapshots){const entry=records.find(e=>e.id===p.id);entry.order=p.order}return}
     view();
   }
@@ -119,7 +120,7 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
     displayEntries(children,item=>{if(item.kind==="detail"){showDetail(item)}else{parentId=item.id;view()}});
   }
   function showDetail(item){
-    area.replaceChildren();navigation(item.title,()=>{if(isNovel)parentId=item.parentId||"";view()});
+    area.replaceChildren();navigation(item.title,()=>{parentId=item.parentId||"";view()});
     area.append(text(item.body||"내용 없음","detail-text"));
     area.append(btn("편집",()=>createOrEdit(item,item.kind,item.parentId||"",item.worldline||"main")));
   }
