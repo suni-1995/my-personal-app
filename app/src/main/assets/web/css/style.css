@@ -133,3 +133,14 @@ header>button{flex:0 0 auto}
  .my-sns-pending:not(:empty){max-height:20dvh;overflow:auto}
  .my-sns .modal-shade{align-items:start}
 }
+
+/* Android-only single-row header and keyboard-safe SNS quote dialog. */
+@media(max-width:850px){
+ header{display:flex!important;flex-wrap:nowrap!important;gap:5px!important;padding:10px 8px!important}
+ header h1{font-size:16px!important;flex:0 0 auto!important}
+ header>.app-test-version{position:static!important;transform:none!important;order:0!important;flex:1 1 auto!important;min-width:0!important;max-width:none!important;font-size:9px!important;letter-spacing:-.5px;white-space:nowrap!important;overflow:visible!important;text-align:center!important}
+ header>select{order:0!important;margin:0!important;flex:0 0 76px!important;width:76px!important;max-width:76px!important;min-width:0!important;padding:7px 2px!important;font-size:11px!important}
+ header>button{order:0!important;flex:0 0 auto!important;padding:7px 5px!important;font-size:11px!important}
+}
+.my-sns-quote-picker{position:fixed;inset:auto 0 auto 0;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:8px 12px;z-index:1000}
+.my-sns-quote-picker .modal{max-height:100%;overflow-y:auto}
