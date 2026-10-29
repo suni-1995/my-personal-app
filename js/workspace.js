@@ -2,7 +2,7 @@ import{listFiles,putFiles,deleteOwner,deleteFile}from"./media-store.js?v=phase1-
 import {SETTINGS_GROUPS,uid} from "./schema.js";
 import {renderCharacterRelations} from "./character-relations.js";
 import {renderCharacterDocuments} from "./character-documents.js";
-import {renderSettingLinks} from "./setting-links.js?v=phase2-step7";
+import {renderSettingLinks} from "./setting-links.js?v=phase2-step7-1";
 import {renderOrganization} from "./organization.js?v=phase2-step6";
 import {renderCharacterTimeline} from "./character-timeline.js?v=phase2-step4-3";
 
