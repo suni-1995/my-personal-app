@@ -23,6 +23,19 @@ export function renderCharacterTimeline({content,data,projectId,entry,el,btn,per
    panel.append(select,btn("연결",()=>{if(available.some(x=>x.id===select.value)&&change([...links(),select.value]))close()},"primary"),btn("취소",close));
   });
  }
+ function editNote(item){
+  popup("캐릭터별 사건 설명 · "+item.title,(panel,close)=>{
+   const label=el("label",{text:"이 캐릭터의 사건 설명"}),input=el("textarea");
+   input.value=entry.timelineEventNotes?.[item.id]||"";
+   label.append(input);panel.append(label);
+   panel.append(btn("저장",()=>{
+    const previous=entry.timelineEventNotes;
+    entry.timelineEventNotes={...(previous||{}),[item.id]:input.value.trim()};
+    if(!persist()){if(previous===undefined)delete entry.timelineEventNotes;else entry.timelineEventNotes=previous;return}
+    close();draw();
+   },"primary"),btn("취소",close));
+  });
+ }
  function preview(item){
   popup(item.title||"이름 없음",(panel,close)=>{
    panel.append(el("p",{class:"hint",text:worldName(item.worldline)}),el("p",{class:"detail-text",text:item.body||"내용이 없습니다."}));
@@ -36,7 +49,11 @@ export function renderCharacterTimeline({content,data,projectId,entry,el,btn,per
   for(const id of links()){
    const item=events().find(x=>x.id===id),line=el("div",{class:"item"});
    line.append(el("span",{text:item?worldName(item.worldline)+" · "+item.title:"삭제된 사건"}));
-   if(item)line.append(btn("열람",()=>preview(item)));
+   if(item){
+    const note=entry.timelineEventNotes?.[id];
+    if(note)line.append(el("p",{class:"detail-text",text:note}));
+    line.append(btn("설명 작성/수정",()=>editNote(item)),btn("열람",()=>preview(item)));
+   }
    line.append(btn("연결 해제",()=>{if(confirm("사건 연결을 해제하시겠습니까?"))change(links().filter(x=>x!==id))},"danger"));
    content.append(line);
   }
