@@ -1,0 +1,175 @@
+import {uid} from "./schema.js";
+import {editSimultaneous} from "./timeline-simultaneous.js";
+
+export function renderWritingPart({area,data,projectId,category,el,btn,heading,modal,persist,initialEventId=null}) {
+  const isTimeline=category==="timeline";
+  const isNovel=category==="novels";
+  const label=isTimeline?"타임라인":isNovel?"장문":"썰";
+  const initialEvent=data.entries.find(e=>e&&e.id===initialEventId&&e.projectId===projectId&&e.category==="timeline");
+  let worldline=initialEvent?.worldline||"main";
+  let parentId=initialEvent?.kind==="detail"?(initialEvent.parentId||""):(initialEvent?.id||"");
+  let activeThreadId="default";
+  let snsEvents=new AbortController();
+  let openingDetail=initialEvent?.kind==="detail"?initialEvent:null;
+  const items=()=>data.entries.filter(e=>e && e.projectId===projectId && e.category===category);
+  const find=id=>items().find(e=>e.id===id);
+  const text=(value,className="")=>el("p",{text:value,class:className});
+  function commit(change,undo){
+    change();
+    if(!persist()){undo();return false}
+    view();return true;
+  }
+  function createOrEdit(existing,kind,selectedParent="",scope="main"){
+    const fields=[{key:"title",label:isTimeline?(kind==="worldline"?"세계선 이름":kind==="major"?"큰 사건 이름":kind==="event"?"사건 이름":"세부 사건 이름"):isNovel?(kind==="work"?"작품 이름":kind==="season"?"시즌 이름":"회차 제목"):"게시물 제목",required:true,value:existing?.title||""}];
+    if(kind!=="worldline"&&kind!=="season") fields.push({key:"body",label:isTimeline?"사건 내용":isNovel?"본문":"게시물 내용",multiline:true,value:existing?.body||""});
+    modal(existing?"수정":"새 "+(isTimeline?"사건":isNovel?"항목":"게시물"),fields,v=>{
+      if(!v.title)return false;
+      const previous=existing?{...existing}:null;
+      const fresh={id:uid(),projectId,category,kind,title:v.title,body:v.body||"",parentId:selectedParent,worldline:scope,updatedAt:Date.now()};
+      if(existing){Object.assign(existing,{title:v.title,...(v.body!==undefined?{body:v.body}:{}),updatedAt:Date.now()})}
+      else data.entries.push(fresh);
+      if(!persist()){
+        if(existing)Object.assign(existing,previous);else data.entries=data.entries.filter(e=>e.id!==fresh.id);
+        return false;
+      }
+      view();
+    });
+  }
+  function remove(item){
+    const descendants=new Set([item.id]);
+    let changed=true;
+    while(changed){changed=false;for(const e of items())if(e.parentId&&descendants.has(e.parentId)&&!descendants.has(e.id)){descendants.add(e.id);changed=true}}
+    if(item.kind==="worldline")for(const e of items())if(e.worldline===item.id)descendants.add(e.id);
+    if(!confirm(descendants.size>1?"하위 항목까지 "+descendants.size+"개를 삭제하시겠습니까?":"이 항목을 삭제하시겠습니까?"))return;
+    const prev=data.entries;
+    commit(()=>{data.entries=prev.filter(e=>!descendants.has(e.id))},()=>{data.entries=prev});
+    if(descendants.has(parentId))parentId="";
+    if(descendants.has(worldline))worldline="main";
+  }
+  function row(item,open){
+    const r=el("div",{class:"item"});
+    r.append(btn(item.title,open,"name"));
+    r.append(btn("편집",()=>createOrEdit(item,item.kind,item.parentId||"",item.worldline||"main")));
+    r.append(btn("삭제",()=>remove(item),"danger"));
+    if(isTimeline&&["event","detail"].includes(item.kind))r.append(btn("동시 사건",()=>editSimultaneous({item,data,projectId,el,btn,persist,onChange:view})));
+    return r;
+  }
+  function navigation(title,onBack){
+    const bar=heading(title,onBack);
+    area.append(bar);
+    return bar;
+  }
+  function displayEntries(entries,open){
+    if(!entries.length)area.append(text("아직 등록한 항목이 없습니다.","empty"));
+    const ordered=entries.slice().sort((a,b)=>(a.order??a.createdAt??a.updatedAt??0)-(b.order??b.createdAt??b.updatedAt??0));
+    for(let i=0;i<ordered.length;i++){
+      const item=ordered[i],r=row(item,()=>open(item));
+      if(isTimeline){
+        r.append(btn("↑",()=>move(ordered,i,-1)));
+        r.append(btn("↓",()=>move(ordered,i,1)));
+      }
+      area.append(r);
+    }
+  }
+  function move(records,index,delta){
+    const other=index+delta;if(other<0||other>=records.length)return;
+    const snapshots=records.map(e=>({id:e.id,order:e.order}));
+    const reordered=records.slice();
+    [reordered[index],reordered[other]]=[reordered[other],reordered[index]];
+    reordered.forEach((e,i)=>e.order=i);
+    // 순서 이동 후 전체 목록에서 변경된 값을 저장한다.
+    if(!persist()){for(const p of snapshots){const entry=records.find(e=>e.id===p.id);entry.order=p.order}return}
+    view();
+  }
+  function worldlineOptions(){
+    const tabs=el("div",{class:"tabs"});
+    tabs.append(btn("기본 세계선",()=>{worldline="main";parentId="";view()},"nav"+(worldline==="main"?" active":"")));
+    for(const w of items().filter(e=>e.kind==="worldline")){
+      tabs.append(btn(w.title,()=>{worldline=w.id;parentId="";view()},"nav"+(worldline===w.id?" active":"")));
+      tabs.append(btn("⋯",()=>worldlineActions(w),"subtle"));
+    }
+    area.append(tabs);
+  }
+  function worldlineActions(w){
+    const shade=el("div",{class:"modal-shade"}),panel=el("div",{class:"modal"});
+    panel.append(el("h2",{text:w.title}),btn("이름 변경",()=>{shade.remove();createOrEdit(w,"worldline")}),btn("세계선 삭제",()=>{shade.remove();remove(w)},"danger"),btn("닫기",()=>shade.remove()));
+    shade.append(panel);shade.addEventListener("click",e=>{if(e.target===shade)shade.remove()});document.querySelector("#app").append(shade);
+  }
+  function renderTimeline(){
+    const top=navigation("타임라인");
+    top.append(btn("+ 세계선",()=>createOrEdit(null,"worldline"),""));
+    worldlineOptions();
+    const selected=worldline==="main"?null:find(worldline);
+    if(worldline!=="main"&&!selected){worldline="main";parentId=""}
+    const parent=find(parentId);
+    const level=parent?.kind==="major"?"event":parent?.kind==="event"?"detail":"major";
+    if(parent&&parent.worldline!==worldline)parentId="";
+    if(parentId&&(!parent||parent.kind==="detail"))parentId="";
+    const effectiveParent=find(parentId);
+    if(effectiveParent){
+      const breadcrumb=el("div",{class:"toolbar"});
+      breadcrumb.append(btn("← 이전 단계",()=>{parentId=effectiveParent.parentId||"";view()}));
+      breadcrumb.append(el("h2",{text:effectiveParent.title}));
+      area.append(breadcrumb);
+      if(effectiveParent.body)area.append(text(effectiveParent.body,"detail-text"));
+    }
+    const childKind=effectiveParent?.kind==="major"?"event":effectiveParent?.kind==="event"?"detail":"major";
+    const childTitle=childKind==="major"?"큰 사건":childKind==="event"?"타임라인 사건":"세부 사건";
+    if(childKind!=="detail"||effectiveParent?.kind==="event"){
+      const bar=el("div",{class:"toolbar"});
+      bar.append(btn("+ "+childTitle,()=>createOrEdit(null,childKind,parentId,worldline),"primary"));
+      area.append(bar);
+    }
+    const children=items().filter(e=>(e.kind||"major")===childKind&&(e.parentId||"")===parentId&&(e.worldline||"main")===worldline);
+    displayEntries(children,item=>{if(item.kind==="detail"){showDetail(item)}else{parentId=item.id;view()}});
+  }
+  function simultaneousSection(item){
+    const section=el("section",{class:"timeline-simultaneous-section"});
+    const head=el("div",{class:"toolbar"});
+    head.append(el("h3",{text:"동시 발생 사건"}),btn("+ 동시 사건 연결",()=>editSimultaneous({item,data,projectId,el,btn,persist,onChange:()=>showDetail(item)})));
+    section.append(head);
+    const peers=items().filter(e=>e.id!==item.id&&e.projectId===projectId&&e.category==="timeline"&&
+      (e.worldline||"main")===(item.worldline||"main")&&
+      ((item.simultaneousIds||[]).includes(e.id)||(e.simultaneousIds||[]).includes(item.id)));
+    if(!peers.length)section.append(text("연결된 동시 사건이 없습니다.","hint"));
+    for(const peer of peers){
+      const record=el("div",{class:"timeline-simultaneous-item"});
+      const top=el("div",{class:"timeline-simultaneous-row"});
+      top.append(el("strong",{text:peer.title||"제목 없음"}));
+      top.append(btn("열람",()=>showDetail(peer)));
+      top.append(btn("연결 해제",()=>{
+        if(!confirm("동시 발생 사건 연결을 해제하시겠습니까?"))return;
+        const oldA=item.simultaneousIds,oldB=peer.simultaneousIds;
+        item.simultaneousIds=(oldA||[]).filter(id=>id!==peer.id);
+        peer.simultaneousIds=(oldB||[]).filter(id=>id!==item.id);
+        if(!persist()){if(oldA===undefined)delete item.simultaneousIds;else item.simultaneousIds=oldA;if(oldB===undefined)delete peer.simultaneousIds;else peer.simultaneousIds=oldB;return}
+        showDetail(item);
+      },"danger"));
+      record.append(top);
+      const note=item.simultaneousNotes?.[peer.id]||"";
+      record.append(el("p",{class:"detail-text",text:note||"설명이 없습니다."}));
+      const bottom=el("div",{class:"timeline-simultaneous-bottom"});
+      bottom.append(btn(note?"설명 수정":"설명 작성",()=>modal("동시 사건 설명",[
+        {key:"note",label:"이 사건에서의 동시 발생 설명",multiline:true,value:note}
+      ],v=>{
+        const before=item.simultaneousNotes;
+        item.simultaneousNotes={...(before||{}),[peer.id]:v.note};
+        if(!persist()){if(before===undefined)delete item.simultaneousNotes;else item.simultaneousNotes=before;return false}
+        showDetail(item);
+      })));
+      record.append(bottom);section.append(record);
+    }
+    return section;
+  }
+  function showDetail(item){
+    area.replaceChildren();navigation(item.title,()=>{parentId=item.parentId||"";view()});
+    area.append(text(item.body||"내용 없음","detail-text"));
+    area.append(btn("편집",()=>createOrEdit(item,item.kind,item.parentId||"",item.worldline||"main")));
+    if(isTimeline&&["event","detail"].includes(item.kind))area.append(simultaneousSection(item));
+  }
+  function view(){
+    area.replaceChildren();
+    if(openingDetail){const item=openingDetail;openingDetail=null;showDetail(item)}else renderTimeline();
+  }
+  view();
+}
