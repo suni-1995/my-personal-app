@@ -2,6 +2,7 @@ import{listFiles,putFiles,deleteOwner,deleteFile}from"./media-store.js?v=phase1-
 import {SETTINGS_GROUPS,uid} from "./schema.js";
 import {renderCharacterRelations} from "./character-relations.js";
 import {renderCharacterDocuments} from "./character-documents.js";
+import {renderOrganization} from "./organization.js";
 import {renderCharacterTimeline} from "./character-timeline.js?v=phase2-step4-3";
 
 export function renderWorkspace({area,data,projectId,category,el,btn,heading,modal,persist,render,onOpenTimeline}) {
@@ -34,7 +35,7 @@ export function renderWorkspace({area,data,projectId,category,el,btn,heading,mod
     if(!entries.length)area.append(el("p",{class:"empty",text:"이 위치에 등록된 항목이 없어."}));
     for(const entry of entries){
       const row=el("div",{class:"item"});
-      row.append(btn((settings?"📄 ":"👤 ")+(entry.title||"제목 없음"),()=>settings?entryEditor(entry):characterDetail(entry),"name"));
+      row.append(btn((settings?"📄 ":"👤 ")+(entry.title||"제목 없음"),()=>settings&&entry.group==="조직도"?renderOrganization({area,document:entry,data,projectId,el,btn,modal,persist,onBack:view}):settings?entryEditor(entry):characterDetail(entry),"name"));
       row.append(btn("편집",()=>entryEditor(entry)));
       row.append(btn("삭제",()=>{if(!confirm("이 항목을 삭제할까?"))return;const old=data.entries;data.entries=old.filter(x=>x.id!==entry.id);if(!persist()){data.entries=old;return}if(!settings)deleteOwner("character:"+entry.id).catch(console.warn);view()},"danger"));
       area.append(row);
