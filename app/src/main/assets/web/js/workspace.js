@@ -2,8 +2,9 @@ import{listFiles,putFiles,deleteOwner,deleteFile}from"./media-store.js";
 import {SETTINGS_GROUPS,uid} from "./schema.js";
 import {renderCharacterRelations} from "./character-relations.js";
 import {renderCharacterDocuments} from "./character-documents.js";
+import {renderCharacterTimeline} from "./character-timeline.js";
 
-export function renderWorkspace({area,data,projectId,category,el,btn,heading,modal,persist,render}) {
+export function renderWorkspace({area,data,projectId,category,el,btn,heading,modal,persist,render,onOpenTimeline}) {
   if(!Array.isArray(data.folders)) data.folders=[];
   const settings=category==="settings";
   const groups=settings?SETTINGS_GROUPS:["캐릭터"];
@@ -131,6 +132,7 @@ export function renderWorkspace({area,data,projectId,category,el,btn,heading,mod
       if(name==="설명")content.append(el("p",{class:"detail-text",text:entry.body||"설명이 아직 없습니다."}));
       else if(name==="인물 관계")renderCharacterRelations({content,data,projectId,entry,el,btn,modal,persist});
       else if(name==="연결 문서")renderCharacterDocuments({content,data,projectId,entry,el,btn,persist});
+      else if(name==="타임라인")renderCharacterTimeline({content,data,projectId,entry,el,btn,persist,onOpenTimeline});
       else if(name==="이미지"&&entry.image)content.append(el("img",{src:entry.image,alt:entry.title,class:"character-image"}));
       else content.append(el("p",{class:"hint",text:name+" 세부 기능은 추후 개발 단계에서 구현할 예정입니다."}));
     },"nav"+(name==="설명"?" active":"")));
