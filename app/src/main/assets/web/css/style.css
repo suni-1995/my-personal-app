@@ -36,3 +36,14 @@
 .character-timeline-note{padding-top:12px}
 .character-timeline-note .detail-text{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;line-height:1.6}
 .character-timeline-note-actions{display:flex;justify-content:flex-end;margin-top:10px}
+
+/* Organization tree: native nested hierarchy, responsive to narrow Android screens. */
+.org-chart{overflow-x:auto;padding:12px 0 18px;border-bottom:1px solid var(--line)}
+.org-chart h3{margin:0 0 14px;font-size:17px}
+.org-tree{list-style:none;padding-left:22px;margin:0;border-left:1px solid var(--line)}
+.org-chart>.org-tree{padding-left:0;border-left:0}
+.org-node{position:relative;margin:10px 0;min-width:0}
+.org-node-card{display:flex;align-items:center;flex-wrap:wrap;gap:9px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:9px;width:fit-content;max-width:100%}
+.org-node-card strong{overflow-wrap:anywhere}
+.org-node-card button{padding:6px 10px}
+.org-node>.org-tree{margin-top:8px}
