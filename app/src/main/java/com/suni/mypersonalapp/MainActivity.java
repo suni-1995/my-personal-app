@@ -20,12 +20,14 @@ import java.util.UUID;
 public class MainActivity extends Activity {
  private WebView webView;
  private ValueCallback<Uri[]> fileCallback;
- private static final int FILE_PICKER=305,NATIVE_PICKER=306;
+ private static final int FILE_PICKER=305,NATIVE_PICKER=306,BACKUP_SAVE=307;
  private static final String BASE="https://appassets.androidplatform.net/assets/";
  private String pickOwner,pickType,pickGroup;
  private int pickMax;
  private File mediaDir;
  private SharedPreferences prefs;
+ private File pendingBackup;
+ private ByteArrayOutputStream backupBytes;
 
  private JSONArray readIndex(){
   try{return new JSONArray(prefs.getString("records","[]"));}
@@ -55,6 +57,35 @@ public class MainActivity extends Activity {
      printView.loadDataWithBaseURL(BASE,html,"text/html","UTF-8",null);
     }catch(Exception ignored){}
    });
+  }
+ }
+ private class BackupBridge{
+  @JavascriptInterface public synchronized String begin(){
+   backupBytes=new ByteArrayOutputStream();return "ok";
+  }
+  @JavascriptInterface public synchronized String append(String encoded){
+   if(backupBytes==null)return "백업이 시작되지 않았어.";
+   try{byte[] chunk=Base64.decode(encoded,Base64.DEFAULT);backupBytes.write(chunk);return "ok";}
+   catch(Exception e){return "백업 데이터 오류: "+e.getMessage();}
+  }
+  @JavascriptInterface public synchronized void abort(){backupBytes=null;}
+  @JavascriptInterface public synchronized String finish(String name){
+   if(backupBytes==null)return "백업이 시작되지 않았어.";
+   try{
+    pendingBackup=new File(getCacheDir(),"myapps-export.zip");
+    try(FileOutputStream out=new FileOutputStream(pendingBackup)){backupBytes.writeTo(out);}
+    backupBytes=null;
+    String safe=name.replaceAll("[\\\\/:*?\"<>|]","_");
+    runOnUiThread(()->{
+     Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);
+     intent.addCategory(Intent.CATEGORY_OPENABLE);
+     intent.setType("application/zip");
+     intent.putExtra(Intent.EXTRA_TITLE,safe);
+     try{startActivityForResult(intent,BACKUP_SAVE);}
+     catch(Exception e){android.util.Log.e("MYAPPS","백업 저장 위치 선택 실패",e);}
+    });
+    return "ok";
+   }catch(Exception e){backupBytes=null;return "백업 준비 실패: "+e.getMessage();}
   }
  }
  private class MediaBridge{
@@ -162,6 +193,7 @@ public class MainActivity extends Activity {
   webView.getSettings().setDomStorageEnabled(true);
   webView.getSettings().setAllowFileAccess(false);
   webView.addJavascriptInterface(new MediaBridge(),"AndroidMedia");
+  webView.addJavascriptInterface(new BackupBridge(),"AndroidBackup");
   webView.addJavascriptInterface(new PdfBridge(),"AndroidPdf");
   webView.setWebChromeClient(new WebChromeClient(){
    @Override public boolean onShowFileChooser(WebView v,ValueCallback<Uri[]> cb,FileChooserParams params){
@@ -195,6 +227,15 @@ public class MainActivity extends Activity {
  }
  @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
   super.onActivityResult(requestCode,resultCode,data);
+  if(requestCode==BACKUP_SAVE){
+   if(resultCode==RESULT_OK&&data!=null&&data.getData()!=null&&pendingBackup!=null){
+    try(InputStream input=new FileInputStream(pendingBackup);OutputStream output=getContentResolver().openOutputStream(data.getData())){
+     if(output==null)throw new IOException("저장 위치를 열 수 없어.");
+     byte[] buffer=new byte[32768];int n;while((n=input.read(buffer))!=-1)output.write(buffer,0,n);
+    }catch(Exception e){android.util.Log.e("MYAPPS","ZIP 저장 실패",e);}
+   }
+   if(pendingBackup!=null)pendingBackup.delete();pendingBackup=null;return;
+  }
   if(requestCode==NATIVE_PICKER){if(resultCode==RESULT_OK)savePicked(data);else respond(errorJson("cancelled"));return;}
   if(requestCode==FILE_PICKER&&fileCallback!=null){fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode,data));fileCallback=null;}
  }
