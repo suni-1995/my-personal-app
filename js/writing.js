@@ -245,6 +245,7 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
         const card=el("div",{class:"my-sns-quote"});
         card.append(el("strong",{text:q?quoteName(q):"인용 자료 없음"}));
         card.append(el("p",{text:q?(q.body||q.baseSetting||"").slice(0,180):"삭제되었거나 찾을 수 없는 자료입니다."}));
+        if(q){card.classList.add("my-sns-quote-open");card.setAttribute("role","button");card.tabIndex=0;const open=()=>{const shade=el("div",{class:"modal-shade"}),panel=el("div",{class:"modal"});panel.append(el("h2",{text:q.title||"인용 자료"}),el("p",{class:"hint",text:quoteName(q)}),el("div",{class:"detail-text",text:q.body||q.baseSetting||"내용이 없습니다."}),btn("닫기",()=>shade.remove()));shade.append(panel);shade.addEventListener("click",e=>{if(e.target===shade)shade.remove()});area.ownerDocument.querySelector("#app").append(shade)};card.addEventListener("click",open);card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open()}})}
         article.append(card);
       }
       if(post.threadLinkId){const t=threads().find(x=>x.id===post.threadLinkId);article.append(btn("↗ "+(post.threadLinkId==="default"?"기본 타래":t?.name||"삭제된 타래"),()=>{if(post.threadLinkId==="default"||t){activeThreadId=post.threadLinkId;view()}}))}
