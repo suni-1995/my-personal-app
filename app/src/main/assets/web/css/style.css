@@ -158,3 +158,7 @@ header>button{flex:0 0 auto}
  .my-sns-feed{padding-bottom:12px}
  .my-sns-post:last-child{margin-bottom:8px}
 }
+
+/* Dialogs must overlay the sticky SNS composer and remain interactive. */
+.modal-shade{z-index:1200}
+.modal-shade>.modal{position:relative;z-index:1}
