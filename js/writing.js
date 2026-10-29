@@ -122,11 +122,49 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
     const children=items().filter(e=>(e.kind||"major")===childKind&&(e.parentId||"")===parentId&&(e.worldline||"main")===worldline);
     displayEntries(children,item=>{if(item.kind==="detail"){showDetail(item)}else{parentId=item.id;view()}});
   }
+  function simultaneousSection(item){
+    const section=el("section",{class:"timeline-simultaneous-section"});
+    const head=el("div",{class:"toolbar"});
+    head.append(el("h3",{text:"동시 발생 사건"}),btn("+ 동시 사건 연결",()=>editSimultaneous({item,data,projectId,el,btn,persist,onChange:()=>showDetail(item)})));
+    section.append(head);
+    const peers=items().filter(e=>e.id!==item.id&&e.projectId===projectId&&e.category==="timeline"&&
+      (e.worldline||"main")===(item.worldline||"main")&&
+      ((item.simultaneousIds||[]).includes(e.id)||(e.simultaneousIds||[]).includes(item.id)));
+    if(!peers.length)section.append(text("연결된 동시 사건이 없습니다.","hint"));
+    for(const peer of peers){
+      const record=el("div",{class:"timeline-simultaneous-item"});
+      const top=el("div",{class:"timeline-simultaneous-row"});
+      top.append(el("strong",{text:peer.title||"제목 없음"}));
+      top.append(btn("열람",()=>showDetail(peer)));
+      top.append(btn("연결 해제",()=>{
+        if(!confirm("동시 발생 사건 연결을 해제하시겠습니까?"))return;
+        const oldA=item.simultaneousIds,oldB=peer.simultaneousIds;
+        item.simultaneousIds=(oldA||[]).filter(id=>id!==peer.id);
+        peer.simultaneousIds=(oldB||[]).filter(id=>id!==item.id);
+        if(!persist()){if(oldA===undefined)delete item.simultaneousIds;else item.simultaneousIds=oldA;if(oldB===undefined)delete peer.simultaneousIds;else peer.simultaneousIds=oldB;return}
+        showDetail(item);
+      },"danger"));
+      record.append(top);
+      const note=item.simultaneousNotes?.[peer.id]||"";
+      record.append(el("p",{class:"detail-text",text:note||"설명이 없습니다."}));
+      const bottom=el("div",{class:"timeline-simultaneous-bottom"});
+      bottom.append(btn(note?"설명 수정":"설명 작성",()=>modal("동시 사건 설명",[
+        {key:"note",label:"이 사건에서의 동시 발생 설명",multiline:true,value:note}
+      ],v=>{
+        const before=item.simultaneousNotes;
+        item.simultaneousNotes={...(before||{}),[peer.id]:v.note};
+        if(!persist()){if(before===undefined)delete item.simultaneousNotes;else item.simultaneousNotes=before;return false}
+        showDetail(item);
+      })));
+      record.append(bottom);section.append(record);
+    }
+    return section;
+  }
   function showDetail(item){
     area.replaceChildren();navigation(item.title,()=>{parentId=item.parentId||"";view()});
     area.append(text(item.body||"내용 없음","detail-text"));
     area.append(btn("편집",()=>createOrEdit(item,item.kind,item.parentId||"",item.worldline||"main")));
-    if(isTimeline&&["event","detail"].includes(item.kind))area.append(btn("동시 사건",()=>editSimultaneous({item,data,projectId,el,btn,persist,onChange:()=>showDetail(item)})));
+    if(isTimeline&&["event","detail"].includes(item.kind))area.append(simultaneousSection(item));
   }
   function novelReader(chapter){
     const chapters=items().filter(e=>e.kind==="chapter"&&e.parentId===chapter.parentId)
