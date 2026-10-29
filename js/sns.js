@@ -1,18 +1,8 @@
 import {uid} from "./schema.js";
-import {editSimultaneous} from "./timeline-simultaneous.js";
-
-export function renderWritingPart({area,data,projectId,category,el,btn,heading,modal,persist,initialEventId=null}) {
-  const isTimeline=category==="timeline";
-  const isNovel=category==="novels";
-  const label=isTimeline?"타임라인":isNovel?"장문":"썰";
-  const initialEvent=data.entries.find(e=>e&&e.id===initialEventId&&e.projectId===projectId&&e.category==="timeline");
-  let worldline=initialEvent?.worldline||"main";
-  let parentId=initialEvent?.kind==="detail"?(initialEvent.parentId||""):(initialEvent?.id||"");
+export function renderWritingPart({area,data,projectId,category,el,btn,heading,modal,persist}) {
   let activeThreadId="default";
-  let openingDetail=initialEvent?.kind==="detail"?initialEvent:null;
-  const items=()=>data.entries.filter(e=>e && e.projectId===projectId && e.category===category);
-  const find=id=>items().find(e=>e.id===id);
-  const text=(value,className="")=>el("p",{text:value,class:className});
+  
+  const items=()=>data.entries.filter(e=>e&&e.projectId===projectId&&e.category===category);
   function renderPosts(){
     if(!Array.isArray(data.socialThreads))data.socialThreads=[];
     const threads=()=>data.socialThreads.filter(t=>t.projectId===projectId);
