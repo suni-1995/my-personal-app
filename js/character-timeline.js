@@ -47,15 +47,22 @@ export function renderCharacterTimeline({content,data,projectId,entry,el,btn,per
   toolbar.append(btn("+ 사건 연결",add,"primary"));content.append(toolbar);
   if(!links().length)content.append(el("p",{class:"hint",text:"연결된 타임라인 사건이 없습니다."}));
   for(const id of links()){
-   const item=events().find(x=>x.id===id),line=el("div",{class:"item"});
-   line.append(el("span",{text:item?worldName(item.worldline)+" · "+item.title:"삭제된 사건"}));
+   const item=events().find(x=>x.id===id),section=el("section",{class:"character-timeline-entry"});
+   const header=el("div",{class:"character-timeline-header"});
+   header.append(el("strong",{class:"character-timeline-title",text:item?worldName(item.worldline)+" · "+item.title:"삭제된 사건"}));
+   const actions=el("div",{class:"character-timeline-actions"});
+   if(item)actions.append(btn("열람",()=>preview(item)));
+   actions.append(btn("연결 해제",()=>{if(confirm("사건 연결을 해제하시겠습니까?"))change(links().filter(x=>x!==id))},"danger"));
+   header.append(actions);section.append(header);
    if(item){
     const note=entry.timelineEventNotes?.[id];
-    if(note)line.append(el("p",{class:"detail-text",text:note}));
-    line.append(btn("설명 작성/수정",()=>editNote(item)),btn("열람",()=>preview(item)));
+    const body=el("div",{class:"character-timeline-note"});
+    body.append(el("p",{class:"detail-text",text:note||"캐릭터 설명을 작성할 수 있습니다."}));
+    const footer=el("div",{class:"character-timeline-note-actions"});
+    footer.append(btn("설명 작성/수정",()=>editNote(item)));
+    body.append(footer);section.append(body);
    }
-   line.append(btn("연결 해제",()=>{if(confirm("사건 연결을 해제하시겠습니까?"))change(links().filter(x=>x!==id))},"danger"));
-   content.append(line);
+   content.append(section);
   }
  }
  draw();
