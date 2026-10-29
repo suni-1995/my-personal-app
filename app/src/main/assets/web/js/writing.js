@@ -192,6 +192,7 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
       const old=current.name;current.name=v.name;
       if(!persist()){current.name=old;return false}view();
     })));
+    if(activeThreadId!=="default")top.append(btn("타래 삭제",()=>{if(!confirm("타래를 삭제하시겠습니까? 게시물은 기본 타래에 남습니다."))return;const old=data.socialThreads,changed=entries().filter(p=>p.threadId===activeThreadId),ids=changed.map(p=>p.threadId);data.socialThreads=old.filter(t=>t.id!==activeThreadId);changed.forEach(p=>p.threadId="default");if(!persist()){data.socialThreads=old;changed.forEach((p,i)=>p.threadId=ids[i]);return}activeThreadId="default";view()},"danger"));
     root.append(top);
     const feed=el("div",{class:"my-sns-feed"});
     root.append(feed);
@@ -201,11 +202,12 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
     box.append(editor);
     const pending=el("div",{class:"my-sns-pending"});
     box.append(pending);
-    let quoteRef=null;
+    let quoteRef=null,threadRef=null;
     const allQuotes=()=>data.entries.filter(e=>e&&e.projectId===projectId&&e.category!=="posts"&&["settings","characters","timeline","novels","fanworks"].includes(e.category)&&e.kind!=="worldline");
     const quoteName=x=>({settings:"설정",characters:"캐릭터",timeline:"타임라인",novels:"장문",fanworks:"창작물"}[x.category]||x.category)+" · "+(x.title||"제목 없음");
     function updatePending(){
       pending.replaceChildren();
+      if(threadRef){const t=threads().find(x=>x.id===threadRef);pending.append(el("div",{class:"my-sns-quote",text:"연결 타래: "+(t?.name||"기본 타래")}),btn("×",()=>{threadRef=null;updatePending()}))}
       if(!quoteRef)return;
       const q=allQuotes().find(e=>e.id===quoteRef.id);
       pending.append(el("div",{class:"my-sns-quote",text:q?"인용할 자료: "+quoteName(q):"자료를 찾을 수 없습니다."}),btn("×",()=>{quoteRef=null;updatePending()}));
@@ -223,13 +225,13 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
       shade.append(panel);area.ownerDocument.querySelector("#app").append(shade);
     }
     const actions=el("div",{class:"my-sns-compose-actions"});
-    actions.append(btn("자료 인용",chooseQuote),btn("게시",()=>{
+    actions.append(btn("자료 인용",chooseQuote),btn("타래 연결",()=>{const choices=[{id:"default",name:"기본 타래"},...threads()].filter(t=>t.id!==activeThreadId);if(!choices.length){alert("연결할 다른 타래가 없습니다.");return}const shade=el("div",{class:"modal-shade"}),panel=el("div",{class:"modal"}),select=el("select");panel.append(el("h2",{text:"타래 연결"}));for(const t of choices)select.append(el("option",{value:t.id,text:t.name}));panel.append(select,btn("선택",()=>{threadRef=select.value;updatePending();shade.remove()},"primary"),btn("취소",()=>shade.remove()));shade.append(panel);area.ownerDocument.querySelector("#app").append(shade)}),btn("게시",()=>{
       const body=editor.value.trim();
       if(!body){alert("글 내용을 입력해 주세요.");return}
-      const post={id:uid(),projectId,category:"posts",kind:"post",title:body.slice(0,40),body,threadId:activeThreadId,quoteRef,createdAt:Date.now(),updatedAt:Date.now()};
+      const post={id:uid(),projectId,category:"posts",kind:"post",title:body.slice(0,40),body,threadId:activeThreadId,quoteRef,threadLinkId:threadRef,createdAt:Date.now(),updatedAt:Date.now()};
       data.entries.push(post);
       if(!persist()){data.entries.pop();return}
-      editor.value="";quoteRef=null;view();
+      editor.value="";quoteRef=null;threadRef=null;view();
     },"primary"));
     box.append(actions);root.append(box);
     const shown=entries().filter(e=>(e.threadId||"default")===activeThreadId).sort((a,b)=>(a.createdAt??a.updatedAt??0)-(b.createdAt??b.updatedAt??0));
@@ -245,6 +247,7 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
         card.append(el("p",{text:q?(q.body||q.baseSetting||"").slice(0,180):"삭제되었거나 찾을 수 없는 자료입니다."}));
         article.append(card);
       }
+      if(post.threadLinkId){const t=threads().find(x=>x.id===post.threadLinkId);article.append(btn("↗ "+(post.threadLinkId==="default"?"기본 타래":t?.name||"삭제된 타래"),()=>{if(post.threadLinkId==="default"||t){activeThreadId=post.threadLinkId;view()}}))}
       article.append(el("p",{class:"hint",text:new Date(post.createdAt||post.updatedAt||Date.now()).toLocaleString("ko-KR")}));
       const footer=el("div",{class:"my-sns-post-actions"});
       footer.append(btn(post.liked?"♥ 좋아요":"♡ 좋아요",()=>{
