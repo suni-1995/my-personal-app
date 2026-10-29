@@ -47,3 +47,5 @@
 .org-node-card strong{overflow-wrap:anywhere}
 .org-node-card button{padding:6px 10px}
 .org-node>.org-tree{margin-top:8px}
+
+body[data-font="serif"]{--app-font:Georgia,"Noto Serif KR",serif}body[data-font="sans"]{--app-font:Arial,"Noto Sans KR",sans-serif}body[data-font="mono"]{--app-font:monospace}.reading-body{white-space:pre-wrap;line-height:1.85;max-width:80ch}.post-quote{white-space:pre-wrap;border-left:3px solid var(--line);padding:8px 12px;margin:8px 0;overflow-wrap:anywhere}
