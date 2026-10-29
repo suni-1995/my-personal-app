@@ -265,7 +265,7 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
         const chosen=choices.find(q=>q.id===select.value);
         if(chosen){quoteRef={id:chosen.id,category:chosen.category};updatePending();shade.remove()}
       },"primary"),btn("취소",()=>shade.remove()));
-      shade.append(panel);area.ownerDocument.querySelector("#app").append(shade);
+      shade.classList.add("my-sns-viewport-modal");shade.append(panel);area.ownerDocument.querySelector("#app").append(shade);const vv=window.visualViewport;const place=()=>{if(vv){shade.style.top=vv.offsetTop+"px";shade.style.height=vv.height+"px";shade.style.bottom="auto"}};place();vv?.addEventListener("resize",place,{signal:snsEvents.signal});
     }
     const actions=el("div",{class:"my-sns-compose-actions"});
     actions.append(btn("자료 인용",chooseQuote),btn("타래 연결",()=>{const choices=[{id:"default",name:"기본 타래"},...threads()].filter(t=>t.id!==activeThreadId);if(!choices.length){alert("연결할 다른 타래가 없습니다.");return}const shade=el("div",{class:"modal-shade"}),panel=el("div",{class:"modal"}),select=el("select");panel.append(el("h2",{text:"타래 연결"}));for(const t of choices)select.append(el("option",{value:t.id,text:t.name}));panel.append(select,btn("선택",()=>{threadRef=select.value;updatePending();shade.remove()},"primary"),btn("취소",()=>shade.remove()));shade.append(panel);area.ownerDocument.querySelector("#app").append(shade)}),btn("게시",()=>{
