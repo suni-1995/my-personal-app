@@ -27,3 +27,12 @@
 .gallery-scroll-item video{display:block;max-width:100%;width:min(100%,760px);max-height:75vh;margin:0 auto}
 .gallery-page-label{color:#bbb;font-size:12px;margin:7px 0 14px}
 @media(max-width:700px){.gallery-scroll-stage{padding:6px 0}.gallery-scroll-panel{height:96vh}.gallery-scroll-item{margin-bottom:7px}}
+
+/* Character timeline: title/actions, three-line description, edit control. */
+.character-timeline-entry{padding:16px 0;border-bottom:1px solid var(--line);min-width:0}
+.character-timeline-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.character-timeline-title{min-width:0;flex:1;overflow-wrap:anywhere}
+.character-timeline-actions{display:flex;gap:7px;flex-wrap:wrap}
+.character-timeline-note{padding-top:12px}
+.character-timeline-note .detail-text{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;line-height:1.6}
+.character-timeline-note-actions{display:flex;justify-content:flex-end;margin-top:10px}
