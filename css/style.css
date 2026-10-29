@@ -98,3 +98,12 @@ header>button{flex:0 0 auto}
 .my-sns-quote-open:hover{border-color:var(--accent)}
 .my-sns-quote-open:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media(max-width:850px){header{flex-wrap:wrap}header>.app-test-version{position:static;transform:none;flex:1 1 100%;order:3;max-width:none;text-align:center}header>select{margin-left:auto;flex:0 1 160px;width:160px}}
+
+.timeline-simultaneous-section{margin-top:28px;border-top:1px solid var(--line);padding-top:18px}
+.timeline-simultaneous-section .toolbar{justify-content:space-between}
+.timeline-simultaneous-section .toolbar h3{margin:0;font-size:17px}
+.timeline-simultaneous-item{border-bottom:1px solid var(--line);padding:16px 0}
+.timeline-simultaneous-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.timeline-simultaneous-row strong{flex:1;min-width:160px;overflow-wrap:anywhere}
+.timeline-simultaneous-item .detail-text{white-space:pre-wrap;overflow-wrap:anywhere;display:block;max-height:none;line-clamp:unset;-webkit-line-clamp:unset;margin:12px 0}
+.timeline-simultaneous-bottom{display:flex;justify-content:flex-end}
