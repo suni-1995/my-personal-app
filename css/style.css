@@ -107,3 +107,7 @@ header>button{flex:0 0 auto}
 .timeline-simultaneous-row strong{flex:1;min-width:160px;overflow-wrap:anywhere}
 .timeline-simultaneous-item .detail-text{white-space:pre-wrap;overflow-wrap:anywhere;display:block;max-height:none;line-clamp:unset;-webkit-line-clamp:unset;margin:12px 0}
 .timeline-simultaneous-bottom{display:flex;justify-content:flex-end}
+
+/* Dialogs must overlay the sticky SNS composer and remain interactive. */
+.modal-shade{z-index:1200}
+.modal-shade>.modal{position:relative;z-index:1}
