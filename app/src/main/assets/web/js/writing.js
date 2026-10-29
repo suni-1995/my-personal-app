@@ -239,6 +239,8 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
     const feed=el("div",{class:"my-sns-feed"});
     root.append(feed);
     const box=el("div",{class:"my-sns-composer"});
+    const keyboard=()=>window.visualViewport?.height < window.innerHeight*0.88;
+    const keepFocus=e=>{if(document.activeElement===editor&&e.cancelable)e.preventDefault()};
     const editor=el("textarea",{placeholder:"지금 떠오른 이야기를 남겨보세요.",class:"my-sns-editor"});
     editor.rows=3;
     const pending=el("div",{class:"my-sns-pending"});
@@ -277,9 +279,11 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
       const empty=feed.querySelector(".empty");if(empty)empty.remove();
       feed.append(renderSnsPost(post));
       editor.focus({preventScroll:true});
-      requestAnimationFrame(()=>{box.scrollIntoView({block:"end",behavior:"instant"});editor.focus({preventScroll:true})});
+      requestAnimationFrame(()=>{editor.focus({preventScroll:true});keepVisible()});
     },"primary"));
     box.append(actions);root.append(box);
+    const send=actions.lastElementChild;send.addEventListener("pointerdown",keepFocus);
+    send.addEventListener("touchstart",keepFocus,{passive:false});
     const shown=entries().filter(e=>(e.threadId||"default")===activeThreadId).sort((a,b)=>(a.createdAt??a.updatedAt??0)-(b.createdAt??b.updatedAt??0));
     if(!shown.length)feed.append(el("p",{class:"empty",text:"아직 이 타래에 게시물이 없습니다."}));
     for(const post of shown)feed.append(renderSnsPost(post));
@@ -315,7 +319,9 @@ export function renderWriting({area,data,projectId,category,el,btn,heading,modal
       },"danger"));
       article.append(footer);return article;
     }
-    editor.addEventListener("focus",()=>{root.classList.add("my-sns-keyboard");requestAnimationFrame(()=>box.scrollIntoView({block:"end"}))});
+    function keepVisible(){const viewport=window.visualViewport;const bottom=viewport?viewport.offsetTop+viewport.height:window.innerHeight;const bounds=box.getBoundingClientRect();if(bounds.bottom>bottom-8)window.scrollBy(0,bounds.bottom-(bottom-8));}
+    editor.addEventListener("focus",()=>{root.classList.add("my-sns-keyboard");requestAnimationFrame(keepVisible)});
+    window.visualViewport?.addEventListener("resize",keepVisible,{signal:snsEvents.signal});
     editor.addEventListener("blur",()=>root.classList.remove("my-sns-keyboard"));
     area.addEventListener("pointerdown",e=>{if(!box.contains(e.target)&&!e.target.closest(".modal-shade")&&document.activeElement===editor)editor.blur()},{signal:snsEvents.signal});
   }
