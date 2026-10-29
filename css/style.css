@@ -49,3 +49,11 @@
 .org-node>.org-tree{margin-top:8px}
 
 body[data-font="serif"]{--app-font:Georgia,"Noto Serif KR",serif}body[data-font="sans"]{--app-font:Arial,"Noto Sans KR",sans-serif}body[data-font="mono"]{--app-font:monospace}.reading-body{white-space:pre-wrap;line-height:1.85;max-width:80ch}.post-quote{white-space:pre-wrap;border-left:3px solid var(--line);padding:8px 12px;margin:8px 0;overflow-wrap:anywhere}
+
+/* Keep global form widths from stretching the application header. */
+header{justify-content:flex-start;flex-wrap:wrap}
+header h1{flex:0 0 auto;white-space:nowrap}
+header>span{flex:0 0 auto;white-space:nowrap}
+header>button{flex:0 0 auto;white-space:nowrap;min-width:max-content}
+header>select{flex:0 1 180px;width:180px;max-width:100%;min-width:125px;margin-left:auto}
+@media(max-width:600px){header{gap:8px 12px}header>select{margin-left:0;flex:1 1 140px;width:auto}header>span{font-size:12px}header>button{padding:8px 10px}}
